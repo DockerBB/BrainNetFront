@@ -3,13 +3,15 @@ import Router from 'vue-router'
 
 // const view = () => import('@/layout/view')
 // index
-const index = () => import('@/views/index/index')
-const home = () => import('@/views/index/children/home')
+const index = () => import('@/page/index/index')
+const home = () => import('@/page/index/children/home/home')
+const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
+const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
 // login
-const login = () => import('@/views/login/login')
+const login = () => import('@/page/login/login')
 // other
-const page401 = () => import('@/views/other/page401')
-const page404 = () => import('@/views/other/page404')
+const page401 = () => import('@/page/other/page401')
+const page404 = () => import('@/page/other/page404')
 
 Vue.use(Router)
 
@@ -21,7 +23,6 @@ Vue.use(Router)
 * keep: false                   是否需要缓存
 * open: false                   是否展开菜单
 */
-
 // 要在侧边栏渲染的路由
 export const sideRoutes = [
     {
@@ -31,6 +32,19 @@ export const sideRoutes = [
         meta: {
             icon: 'el-icon-my-home',
             title: '主页'
+        }
+    },
+    {
+        name: 'bn-view',
+        path: 'brainNet',
+        components: {
+            default: bnViewer,
+            sideOption: brainSide
+        },
+        meta: {
+            icon: 'el-icon-menu',
+            title: '脑神经网络',
+            switchon: true
         }
     }
 ]

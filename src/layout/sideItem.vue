@@ -22,7 +22,7 @@
             </el-submenu>
 
             <!-- 没有子路由的 -->
-            <router-link v-else :to="{'name': list.name}" :key="listIndex">
+            <router-link v-else-if="list.meta" :to="{'name': list.name}" :key="listIndex">
                 <el-menu-item :index="list.name">
                     <i v-if="list.meta.icon" :class="list.meta.icon"></i>
                     <span slot="title">{{ routeName(list) }}</span>
@@ -34,6 +34,7 @@
 <script>
 export default {
     name: 'menuItem',
+    // components: { bnViewer },
     props: {
         json: Array
     },

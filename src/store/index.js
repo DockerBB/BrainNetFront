@@ -7,7 +7,8 @@ Vue.use(Vuex)
 
 const state = {
     logs: [], // 错误日志
-    user: '' // 用户信息
+    user: '', // 用户信息
+    bnOption: { flag: false, allMaterial: {} }
 }
 const getters = {
 }
@@ -20,6 +21,9 @@ const mutations = {
     },
     SET_ROLE(state, val) {
         state.user.role = val
+    },
+    SET_BN(state, val) {
+        state.bnOption.flag = val
     },
     SET_LOGOUT(state) {
         state.user = ''

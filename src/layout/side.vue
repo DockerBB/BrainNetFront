@@ -2,9 +2,10 @@
     <vue-position-sticky sticky-class="sticky-class">
         <el-aside id="side" width="180px">
             <!-- menu -->
-            <el-menu :default-active="$route.name" :default-openeds="defaultOpeneds" background-color="#304156" text-color="#bfcbd9" active-text-color="#42b983">
+            <el-menu id="menuItem" :default-active="$route.name" :default-openeds="defaultOpeneds" background-color="#304156" text-color="#bfcbd9" active-text-color="#42b983">
                 <my-side-item :json="filterRoutes"></my-side-item>
             </el-menu>
+            <router-view name="sideOption" style="background-color: #304156;"></router-view>
         </el-aside>
     </vue-position-sticky>
 </template>

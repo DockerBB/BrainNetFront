@@ -12,6 +12,8 @@
         "element-ui": "^2.4.7",
         "js-cookie": "^2.2.0",
         "mockjs": "^1.0.1-beta3",
+        "nifti-reader-js": "^0.5.4",
+        "three": "^0.97.0",
         "vue": "^2.5.17",
         "vue-position-sticky": "^0.2.0",
         "vue-progressbar": "^0.7.5",

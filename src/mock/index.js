@@ -8,7 +8,7 @@ Mock.mock('http://blog.liansixin.win/user', {
     code: 200,
     msg: 'success',
     data: {
-        nickname: '思鑫',
+        nickname: '大脑破坏者',
         headimgurl: 'https://avatars1.githubusercontent.com/u/25951301?s=40&v=4',
         role: 'admin'
     }
