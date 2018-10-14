@@ -32,14 +32,19 @@ Object.assign( EdgeLoader.prototype ,{
   },
 
   parse: function ( data, onload ) {
+      var list = [];
       data.split(/\n/g).splice(1).forEach(function(row, i){
           row.split(/\s/g).forEach(function(cell, j){
               if (cell != 0) {
-                  onload( i, j, parseFloat( cell ) );
+                  list.push([i, j, parseFloat( cell )]);
+                  // onload( i, j, parseFloat( cell ) );
                   // onload( i - 1, j, cell );
               }
           });
       });
+      list.forEach(function (item) {
+          onload( item[0], item[1], item[2] );
+      })
   }
 
 } );

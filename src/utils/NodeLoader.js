@@ -9,7 +9,7 @@
  * @author Paul Kibet Korir https://github.com/polarise
  * @author Sriram Somasundharam https://github.com/raamssundar
  */
-import { DefaultLoadingManager, EventDispatcher, FileLoader, MeshLambertMaterial, SphereGeometry, Mesh, Vector3 } from 'three'
+import { DefaultLoadingManager, EventDispatcher, FileLoader, MeshBasicMaterial, SphereBufferGeometry, Mesh, Vector3 } from 'three'
 
 function NodeLoader( manager ) {
 
@@ -43,9 +43,8 @@ Object.assign( NodeLoader.prototype ,{
 
   parse: function ( data, onLoad ) {
 
-      var ObjectVertex = [];
+      var Object = [];
       var ObjectRadius = [];
-      var ObjectLabel = [];
       var ObjectColorId = [];
       var pattern, result;
 
@@ -53,16 +52,23 @@ Object.assign( NodeLoader.prototype ,{
 
       pattern = /([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\d]+)[\s]+([\d]+\.?[\d|\-|e]*)[\s]+([a-zA-Z]+[\.][LR])[\s]+/g;
 
+      var sphereMaterial = new MeshBasicMaterial({ color: 0x3a8ee6 });
+      var shpereGeometry = new SphereBufferGeometry();
       while ( ( result = pattern.exec( data ) ) != null ) {
 
-          // ["-38.65	-5.68	50.94	4	4.96	PreCG.L", "x", "y", "z", "color", "size", "Label"]
+          // ["-38.65	-5.68	50.94	4	4.96	PreCG.L", "x", "y", "z", "color", "size", "Label"]new THREE.SphereGeometry(radius)
 
-          ObjectVertex[ObjectVertex.length] = new Vector3( result[ 1 ], result[ 2 ], result[ 3 ] );
-          ObjectColorId[ObjectColorId.length] = parseInt( result[ 4 ] );
-          ObjectRadius[ObjectRadius.length] = parseFloat( result[ 5 ] );
-          ObjectLabel[ObjectLabel.length] = result[ 6 ];
+          var mesh = new Mesh(
+              shpereGeometry.clone(),
+              sphereMaterial.clone()
+          );
+          mesh.position.set( parseFloat( result[ 1 ] ), parseFloat( result[ 2 ] ), parseFloat( result[ 3 ] ) );
+          mesh.name = result[ 6 ];
+          Object.push( mesh );
+          ObjectRadius.push( parseFloat( result[ 5 ] ) );
+          ObjectColorId.push( parseInt( result[ 4 ] ) );
       }
-      onLoad( ObjectVertex, ObjectColorId, ObjectRadius, ObjectLabel );
+      onLoad( Object, ObjectRadius, ObjectColorId );
   }
 
 } );

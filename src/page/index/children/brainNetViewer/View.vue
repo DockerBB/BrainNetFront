@@ -2,7 +2,7 @@
   <el-container direction="horizontal">
     <div id="WebGL-output">
     </div>
-    <div id="Info-output">
+    <div id="Info-output" style="background-color: #3a8ee6; width: 100%;">
       <p>11111</p>
     </div>
   </el-container>
@@ -21,6 +21,11 @@
         data(){
             return {
                 scene: new THREE.Scene(),
+                webGLRenderer: null,
+                camera: null,
+                controls: null,
+                outputWidth: document.getElementById('main').clientWidth,
+                outputHeight: window.innerHeight,
                 bnOption: this.$store.state.bnOption
             }
         },
@@ -43,25 +48,49 @@
                 var surfMesh = this.scene.getObjectByName('surface');
                 if (surfMesh) surfMesh.material.opacity = this.bnOption.allMaterial.surfMaterial.opacity;
             },
+            'bnOption.allMaterial.surfMaterial.clip' : function () {
+                var surfMesh = this.scene.getObjectByName('surface');
+                if (surfMesh) {
+                    var enable = this.bnOption.allMaterial.surfMaterial.clip;
+                    var clipArr = [];
+                    if (enable) clipArr = [
+                        new THREE.Plane(new THREE.Vector3(1, 0, 0), -2.0)
+                    ];
+                    this.webGLRenderer.localClippingEnabled = enable;
+                    surfMesh.material.setValues( {
+                        clippingPlanes: clipArr
+                    } );
+                }
+            },
         },
         methods: {
-            setOutputWindowSize() {
+            onOutputWindowResize() {
                 document.getElementById('main').style.padding = '0px';
-
+                // 获取宽高
+                this.outputWidth = document.getElementById('main').clientWidth;
+                this.outputHeight = window.innerHeight;
+                // 设置渲染器宽高
+                if (this.webGLRenderer) {
+                    this.webGLRenderer.setSize(this.outputWidth * 0.8, this.outputHeight);
+                    // 设置相机视锥体宽高比
+                    this.camera.aspect = this.outputWidth * 0.8 / this.outputHeight;
+                    // 更新相机投影矩阵
+                    this.camera.updateProjectionMatrix();
+                    // 设置Info-output宽高
+                    document.getElementById('Info-output').style.height = window.innerHeight;
+                }
             },
             init() {
                 const scene = this.scene;
-                const outputWidth = document.getElementById('main').clientWidth * 0.8;
-                const outputHeight = window.innerHeight;
-                const camera = new THREE.PerspectiveCamera(45, outputWidth / outputHeight, 0.1, 1000);
-                const webGLRenderer = new THREE.WebGLRenderer();
+                const WebGLWidth = this.outputWidth * 0.8;
+                const WebGLHeight = this.outputHeight;
+                const camera = this.camera = new THREE.PerspectiveCamera(45, WebGLWidth / WebGLHeight, 0.1, 1000);
+                const webGLRenderer = this.webGLRenderer = new THREE.WebGLRenderer();
                 const spotLight = new THREE.SpotLight(0xffffff);
-                // const surfloader = new SurfLoader();
-                const nodeloader = new NodeLoader();
-                const edgeloader = new EdgeLoader();
                 webGLRenderer.setClearColor(new THREE.Color(0xffffff));
-                webGLRenderer.setSize(outputWidth, outputHeight);
-                webGLRenderer.shadowMapEnabled = true;
+                webGLRenderer.setSize(WebGLWidth, WebGLHeight);
+                // webGLRenderer.shadowMapEnabled = true;
+                // webGLRenderer.localClippingEnabled = true;
 
                 // position and point the camera to the center of the scene
                 camera.position.x = 200;
@@ -70,7 +99,7 @@
                 camera.lookAt(new THREE.Vector3(0, 0, 0));
 
                 // add spotlight for the shadows
-                spotLight.position.set(200, 0, 0);
+                spotLight.position.copy(camera.position);
                 scene.add(spotLight);
 
                 // add the output of the renderer to the html element
@@ -78,6 +107,7 @@
 
                 const controls = new TrackballControls(camera, webGLRenderer.domElement);
                 controls.rotateSpeed = 6.0;
+                this.controls = controls;
 
                 function animate() {
                     webGLRenderer.clear();
@@ -95,52 +125,61 @@
                 var oldObject = scene.getObjectByName('surface');
                 if (oldObject instanceof THREE.Mesh) scene.remove(oldObject);
                 surfloader.load( this.bnOption.allDATA['surfDATA'], function (geometry) {
+                    // var plane = THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
                     var mat = new THREE.MeshLambertMaterial({
                         color: parseInt(surfMaterial.color.replace('#','0x'),16),
                         side: THREE.DoubleSide,
                         opacity: surfMaterial.opacity,
                         transparent: true,
-                        vertexColors: THREE.VertexColors
+                        vertexColors: THREE.VertexColors,
+                        // clippingPlanes: [ new THREE.Plane( new THREE.Vector3(1, 0, 0), 0.8 ) ],
+                        // clipShadows: true
                     });
 
                     var mesh = new THREE.Mesh(geometry, mat);
+                    // mesh.castShadow = true;
                     mesh.name = 'surface';
                     scene.add(mesh);
+                    var sphereMaterial = new THREE.MeshLambertMaterial({ color: 0 });
+                    var sphere = new THREE.Mesh(
+                        new THREE.SphereGeometry(1.0),
+                        sphereMaterial
+                    );
+                    sphere.position.set(1,0,0);
+                    scene.add(sphere);
                 } );
                 delete this.bnOption.allDATA['surfDATA'];
             },
             loadnode: function(){
                 const nodeloader = new NodeLoader();
                 const scene = this.scene;
+                const controls = this.controls;
                 var oldObject = scene.getObjectByName('node');
                 if (oldObject instanceof THREE.Group) scene.remove(oldObject);
                 oldObject = scene.getObjectByName('edge');
                 if (oldObject instanceof THREE.Group) scene.remove(oldObject);
-                nodeloader.load( this.bnOption.allDATA['nodeDATA'], function ( ObjectVertex, ObjectColorId, ObjectRadius, ObjectLabel ) {
+
+                var matlabColor = [
+                    0xFFFF00,  //yellow
+                    0xFF00FF,  //magenta
+                    0x00FFFF,  //cyan
+                    0xFF0000,  //red
+                    0x90EE90,  //green
+                    0x87CEFA,  //blue
+                    0x000000,  //white
+                    0xFFFFFF  //black
+                ];
+                nodeloader.load( this.bnOption.allDATA['nodeDATA'], function ( Object, ObjectRadius, ObjectColorId ) {
                     var group = new THREE.Group();
                     group.name = 'node';
-                    var matlabColor = new Array(8);
-                    matlabColor[0] = 0xFFFF00;  //yellow
-                    matlabColor[1] = 0xFF00FF;  //magenta
-                    matlabColor[2] = 0x00FFFF;  //cyan
-                    matlabColor[3] = 0xFF0000;  //red
-                    matlabColor[4] = 0x90EE90;  //green
-                    matlabColor[5] = 0x87CEFA;  //blue
-                    matlabColor[6] = 0x000000;  //white
-                    matlabColor[7] = 0xFFFFFF;  //black
-                    ObjectVertex.forEach(function (vertex, index) {
-                        //设置球体的值
-                        var radius = ObjectRadius[ index ];//, segemnt = 16, rings = 16;
-                        var sphereMaterial = new THREE.MeshLambertMaterial({ color: matlabColor[ ObjectColorId[ index ] ] });
-                        var sphere = new THREE.Mesh(
-                            new THREE.SphereGeometry(radius),//,segemnt,rings),
-                            sphereMaterial
-                        );
-                        sphere.position.copy( vertex );
-                        sphere.name = ObjectLabel[ index ];
-                        group.add(sphere);
+                    Object.forEach(function (mesh, index) {
+                        mesh.material.color.set( matlabColor[ ObjectColorId[ index ] ] );
+                        var radius = ObjectRadius[index] + 0.1;
+                        mesh.scale.set(radius, radius, radius);
+                        group.add(mesh);
                     });
                     scene.add(group);
+                    controls.setObjects( Object );
                 });
                 delete this.bnOption.allDATA['nodeDATA'];
             },
@@ -154,7 +193,6 @@
                 group.name = 'edge';
                 edgeloader.load( this.bnOption.allDATA['edgeDATA'], function ( i, j, weight ) {
                     var positions = [];
-                    // console.log( '[' + i + '][' + j + ']: ' + weight);
                     positions.push(
                         nodeObjects[ i ].position.x,
                         nodeObjects[ i ].position.y,
@@ -165,7 +203,6 @@
                         nodeObjects[ j ].position.z );
                     var geometry = new MeshLine.LineGeometry();
                     geometry.setPositions( positions );
-                    // console.log( positions );
                     var matLine = new MeshLine.LineMaterial( {
                         color: 0xFF0000,
                         linewidth: 0.005 * weight, // in pixels
@@ -178,7 +215,6 @@
                     // line.scale.set( 1, 1, 1 );
                     group.add( line );
                 } );
-                console.log(group);
                 scene.add( group );
                 delete this.bnOption.allDATA['edgeDATA'];
             },
@@ -222,7 +258,8 @@
             },
         },
         mounted() {
-            window.addEventListener('resize', this.getWindowWidth);
+            this.onOutputWindowResize();
+            window.addEventListener('resize', this.onOutputWindowResize);
             this.init();
         }
     }

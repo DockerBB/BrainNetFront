@@ -19,8 +19,6 @@
           <el-row type="flex">
             <el-col class="select">
               <a href="javascript:;" class="file" style="width: 100%;">{{ volLabel }}<input type="file" accept=".nii" @change="uploadnifti"></a>
-              <!--<img :src="bnOption.NIFTIModel.z_slice[numOfslice]" width="240px" height="330"/>-->
-              <!--<el-slider v-model="numOfslice" :max="180"></el-slider>-->
             </el-col>
           </el-row>
         </div>
@@ -30,12 +28,19 @@
                     width="300"
                     trigger="hover">
                 <h3>设置脑曲面的属性</h3>
-                <el-form :label-position="'left'" label-width="100px" :model="bnOption.allMaterial.surfMaterial">
+                <el-form v-if="bnOption.allMaterial.surfMaterial" :label-position="'left'" label-width="100px" :model="bnOption.allMaterial.surfMaterial">
                     <el-form-item label="脑曲面颜色">
                         <el-color-picker v-model="bnOption.allMaterial.surfMaterial.color"></el-color-picker>
                     </el-form-item>
                     <el-form-item label="脑曲面透明度">
                         <el-slider v-model="bnOption.allMaterial.surfMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
+                    </el-form-item>
+                    <el-form-item label="脑曲切面">
+                        <el-switch
+                                v-model="bnOption.allMaterial.surfMaterial.clip"
+                                active-color="#13ce66"
+                                inactive-color="#ff4949">
+                        </el-switch>
                     </el-form-item>
                 </el-form>
                 <el-button slot="reference" type="text">脑曲面</el-button>
@@ -46,10 +51,7 @@
                     width="300"
                     trigger="hover">
                 <h3>设置节点的属性</h3>
-                <div style="text-align: right; margin: 0">
-                    <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :max="50" :step="5" show-input show-stops></el-slider>
-                    <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color"></el-color-picker>
-                    <el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
+                <div v-if="bnOption.allMaterial.nodeMaterial" style="text-align: right; margin: 0">
                 </div>
                 <el-button slot="reference" type="text">节点</el-button>
             </el-popover>
@@ -58,8 +60,8 @@
                     placement="right"
                     width="300"
                     trigger="hover">
-                <h3>设置节点的属性</h3>
-                <div style="text-align: right; margin: 0">
+                <h3>设置联结的属性</h3>
+                <div v-if="bnOption.allMaterial.lineMaterial" style="text-align: right; margin: 0">
                     <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :max="50" :step="5" show-input show-stops></el-slider>
                     <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color"></el-color-picker>
                     <el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
@@ -71,12 +73,8 @@
                     placement="right"
                     width="300"
                     trigger="hover">
-                <h3>设置节点的属性</h3>
-                <div style="text-align: right; margin: 0">
-                    <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :max="50" :step="5" show-input show-stops></el-slider>
-                    <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color"></el-color-picker>
-                    <el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
-                </div>
+                <img v-if="bnOption.NIFTIModel" :src="bnOption.NIFTIModel.z_slice[numOfslice]" width="240px" height="330"/>
+                <el-slider v-model="numOfslice" :max="180"></el-slider>
                 <el-button slot="reference" type="text">容器</el-button>
             </el-popover>
         </div>
@@ -164,7 +162,8 @@
           this.bnOption.allMaterial = {
               surfMaterial: {
                   color: '#f8f8ff',
-                  opacity: 0.55
+                  opacity: 0.55,
+                  clip: false
               },
               lineMaterial: {
                   color: '#ffffe0',

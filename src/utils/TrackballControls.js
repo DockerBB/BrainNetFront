@@ -6,12 +6,14 @@
  * @author Luca Antiga 	/ http://lantiga.github.io
  */
 import * as THREE from 'three'
-function TrackballControls( object, domElement ) {
+function TrackballControls( camera, domElement ) {
 
   var _this = this;
   var STATE = { NONE: - 1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
 
-  this.object = object;
+  this.camera = camera;
+  this.objects = [];
+  this._hover = null;
   this.domElement = ( domElement !== undefined ) ? domElement : document;
 
   // API
@@ -67,8 +69,8 @@ function TrackballControls( object, domElement ) {
   // for reset
 
   this.target0 = this.target.clone();
-  this.position0 = this.object.position.clone();
-  this.up0 = this.object.up.clone();
+  this.position0 = this.camera.position.clone();
+  this.up0 = this.camera.up.clone();
 
   // events
 
@@ -112,6 +114,12 @@ function TrackballControls( object, domElement ) {
 
   };
 
+  this.setObjects = function( objects ) {
+      objects.forEach(function (obj) {
+          _this.objects.push(obj);
+      });
+  };
+
   var getMouseOnScreen = ( function () {
 
     var vector = new THREE.Vector2();
@@ -151,8 +159,8 @@ function TrackballControls( object, domElement ) {
     var axis = new THREE.Vector3(),
       quaternion = new THREE.Quaternion(),
       eyeDirection = new THREE.Vector3(),
-      objectUpDirection = new THREE.Vector3(),
-      objectSidewaysDirection = new THREE.Vector3(),
+      cameraUpDirection = new THREE.Vector3(),
+      cameraSidewaysDirection = new THREE.Vector3(),
       moveDirection = new THREE.Vector3(),
       angle;
 
@@ -163,16 +171,16 @@ function TrackballControls( object, domElement ) {
 
       if ( angle ) {
 
-        _eye.copy( _this.object.position ).sub( _this.target );
+        _eye.copy( _this.camera.position ).sub( _this.target );
 
         eyeDirection.copy( _eye ).normalize();
-        objectUpDirection.copy( _this.object.up ).normalize();
-        objectSidewaysDirection.crossVectors( objectUpDirection, eyeDirection ).normalize();
+        cameraUpDirection.copy( _this.camera.up ).normalize();
+        cameraSidewaysDirection.crossVectors( cameraUpDirection, eyeDirection ).normalize();
 
-        objectUpDirection.setLength( _moveCurr.y - _movePrev.y );
-        objectSidewaysDirection.setLength( _moveCurr.x - _movePrev.x );
+        cameraUpDirection.setLength( _moveCurr.y - _movePrev.y );
+        cameraSidewaysDirection.setLength( _moveCurr.x - _movePrev.x );
 
-        moveDirection.copy( objectUpDirection.add( objectSidewaysDirection ) );
+        moveDirection.copy( cameraUpDirection.add( cameraSidewaysDirection ) );
 
         axis.crossVectors( moveDirection, _eye ).normalize();
 
@@ -180,7 +188,7 @@ function TrackballControls( object, domElement ) {
         quaternion.setFromAxisAngle( axis, angle );
 
         _eye.applyQuaternion( quaternion );
-        _this.object.up.applyQuaternion( quaternion );
+        _this.camera.up.applyQuaternion( quaternion );
 
         _lastAxis.copy( axis );
         _lastAngle = angle;
@@ -188,10 +196,10 @@ function TrackballControls( object, domElement ) {
       } else if ( ! _this.staticMoving && _lastAngle ) {
 
         _lastAngle *= Math.sqrt( 1.0 - _this.dynamicDampingFactor );
-        _eye.copy( _this.object.position ).sub( _this.target );
+        _eye.copy( _this.camera.position ).sub( _this.target );
         quaternion.setFromAxisAngle( _lastAxis, _lastAngle );
         _eye.applyQuaternion( quaternion );
-        _this.object.up.applyQuaternion( quaternion );
+        _this.camera.up.applyQuaternion( quaternion );
 
       }
 
@@ -239,7 +247,7 @@ function TrackballControls( object, domElement ) {
   this.panCamera = ( function () {
 
     var mouseChange = new THREE.Vector2(),
-      objectUp = new THREE.Vector3(),
+      cameraUp = new THREE.Vector3(),
       pan = new THREE.Vector3();
 
     return function panCamera() {
@@ -250,10 +258,10 @@ function TrackballControls( object, domElement ) {
 
         mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
 
-        pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
-        pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
+        pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
+        pan.add( cameraUp.copy( _this.camera.up ).setLength( mouseChange.y ) );
 
-        _this.object.position.add( pan );
+        _this.camera.position.add( pan );
         _this.target.add( pan );
 
         if ( _this.staticMoving ) {
@@ -278,14 +286,14 @@ function TrackballControls( object, domElement ) {
 
       if ( _eye.lengthSq() > _this.maxDistance * _this.maxDistance ) {
 
-        _this.object.position.addVectors( _this.target, _eye.setLength( _this.maxDistance ) );
+        _this.camera.position.addVectors( _this.target, _eye.setLength( _this.maxDistance ) );
         _zoomStart.copy( _zoomEnd );
 
       }
 
       if ( _eye.lengthSq() < _this.minDistance * _this.minDistance ) {
 
-        _this.object.position.addVectors( _this.target, _eye.setLength( _this.minDistance ) );
+        _this.camera.position.addVectors( _this.target, _eye.setLength( _this.minDistance ) );
         _zoomStart.copy( _zoomEnd );
 
       }
@@ -296,7 +304,7 @@ function TrackballControls( object, domElement ) {
 
   this.update = function () {
 
-    _eye.subVectors( _this.object.position, _this.target );
+    _eye.subVectors( _this.camera.position, _this.target );
 
     if ( ! _this.noRotate ) {
 
@@ -316,17 +324,17 @@ function TrackballControls( object, domElement ) {
 
     }
 
-    _this.object.position.addVectors( _this.target, _eye );
+    _this.camera.position.addVectors( _this.target, _eye );
 
     _this.checkDistances();
 
-    _this.object.lookAt( _this.target );
+    _this.camera.lookAt( _this.target );
 
-    if ( lastPosition.distanceToSquared( _this.object.position ) > EPS ) {
+    if ( lastPosition.distanceToSquared( _this.camera.position ) > EPS ) {
 
       _this.dispatchEvent( changeEvent );
 
-      lastPosition.copy( _this.object.position );
+      lastPosition.copy( _this.camera.position );
 
     }
 
@@ -338,20 +346,65 @@ function TrackballControls( object, domElement ) {
     _prevState = STATE.NONE;
 
     _this.target.copy( _this.target0 );
-    _this.object.position.copy( _this.position0 );
-    _this.object.up.copy( _this.up0 );
+    _this.camera.position.copy( _this.position0 );
+    _this.camera.up.copy( _this.up0 );
 
-    _eye.subVectors( _this.object.position, _this.target );
+    _eye.subVectors( _this.camera.position, _this.target );
 
-    _this.object.lookAt( _this.target );
+    _this.camera.lookAt( _this.target );
 
     _this.dispatchEvent( changeEvent );
 
-    lastPosition.copy( _this.object.position );
+    lastPosition.copy( _this.camera.position );
 
   };
 
   // listeners
+
+
+    function onHoverUse() {
+        if (_this.objects.length == 0) return;
+        var _camera = _this.camera;
+        var _mouse = new THREE.Vector2();
+        var _raycaster = new THREE.Raycaster();
+        var rect = domElement.getBoundingClientRect();
+        var _objects = _this.objects;
+
+        _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
+        _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
+
+        _raycaster.setFromCamera( _mouse, _camera );
+
+        var intersects = _raycaster.intersectObjects( _objects );
+
+        if ( intersects.length > 0 ) {
+
+            var object = intersects[ 0 ].object;
+
+            if ( _this._hovered !== object ) {
+
+                _this.dispatchEvent( { type: 'hoveron', object: object } );
+
+                domElement.style.cursor = 'pointer';
+                domElement.title = object.name;
+                _this._hovered = object;
+
+            }
+
+        } else {
+
+            if ( _this._hovered !== null ) {
+
+                _this.dispatchEvent( { type: 'hoveroff', object: this._hovered } );
+
+                domElement.style.cursor = 'auto';
+                domElement.title = '';
+                _this._hovered = null;
+
+            }
+
+        }
+    }
 
   function keydown( event ) {
 
@@ -421,6 +474,7 @@ function TrackballControls( object, domElement ) {
 
     }
 
+    document.removeEventListener('mousemove', onHoverUse);
     document.addEventListener( 'mousemove', mousemove, false );
     document.addEventListener( 'mouseup', mouseup, false );
 
@@ -463,6 +517,7 @@ function TrackballControls( object, domElement ) {
 
     document.removeEventListener( 'mousemove', mousemove );
     document.removeEventListener( 'mouseup', mouseup );
+    document.addEventListener( 'mousemove', onHoverUse, false );
     _this.dispatchEvent( endEvent );
 
   }
