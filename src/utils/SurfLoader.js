@@ -9,7 +9,7 @@
  * @author Paul Kibet Korir https://github.com/polarise
  * @author Sriram Somasundharam https://github.com/raamssundar
  */
-import { DefaultLoadingManager, EventDispatcher, Geometry, Vector3, Face3, Mesh, Color } from 'three'
+import { DefaultLoadingManager, EventDispatcher, Geometry, Vector3, Face3, BufferGeometry, BufferAttribute, Float32Array } from 'three'
 
 function SurfLoader( manager ) {
 
@@ -37,17 +37,6 @@ Object.assign( SurfLoader.prototype ,{
   },
 
   parse: function ( data ) {
-    /**
-    * 相比Geometry，BufferGeometry 会缓存网格模型，性能要高效点。网格模型生成原理
-
-    1、Geometry 生成的模型是这样的 （代码）-> (CUP 进行数据处理，转化成虚拟3D数据) -> (GPU 进行数据组装，转化成像素点，准备渲染) -> 显示器
-    第二次操作时重复走这些流程。
-
-    2、BufferGeometry 生成模型流程 (代码) -> (CUP 进行数据处理，转化成虚拟3D数据) -> (GPU 进行数据组装，转化成像素点，准备渲染) -> (丢入缓存区) -> 显示器
-    第二次修改时，通过API直接修改缓存区数据，流程就变成了这样
-    (代码) -> (CUP 进行数据处理，转化成虚拟3D数据) -> (修改缓存区数据) -> 显示器
-    * @type {Geometry}
-    */
     var geometry = new Geometry();
 
     function vertex( x, y, z ) {
@@ -89,12 +78,17 @@ Object.assign( SurfLoader.prototype ,{
     }
 
     //geometry.computeCentroids();
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-    geometry.computeBoundingSphere();
+    geometry.computeFaceNormals();    //平滑
+    geometry.computeVertexNormals();  //平滑
+    geometry.computeBoundingBox();
 
-    console.log(geometry);
-    return geometry;
+    // let positions = new Float32Array(geometry.vertices.length * 3);
+    // let colors = new Float32Array(geometry.vertices.length * 3);
+    // geometry.addAttribute('position', new BufferAttribute(positions, 3));
+    // geometry.addAttribute('color', new BufferAttribute(colors, 3));
+
+    return new BufferGeometry().fromGeometry(geometry);
+    // return geometry;
     // geometry.toJSON()
 
   }

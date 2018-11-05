@@ -42,6 +42,7 @@
                                 inactive-color="#ff4949">
                         </el-switch>
                     </el-form-item>
+                    <el-button @click="getPhoto">屏幕快照</el-button>
                 </el-form>
                 <el-button slot="reference" type="text">脑曲面</el-button>
             </el-popover>
@@ -98,6 +99,11 @@
       methods: {
           init: function() {
               // document.getElementById('menuItem').style.display = 'none';
+          },
+          getPhoto: function() {
+              var canvas = document.getElementById('WebGL-output').children[0];
+              var gl = canvas.getContext("experimental-webgl", {preserveDrawingBuffer: true});
+              console.log(canvas.toDataURL());
           },
           uploadsurf: function(ev) {
               let self = this;

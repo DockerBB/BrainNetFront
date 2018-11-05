@@ -13,7 +13,8 @@ function TrackballControls( camera, domElement ) {
 
   this.camera = camera;
   this.objects = [];
-  this._hover = null;
+  this._hovered = null;
+  this._selected = null;
   this.domElement = ( domElement !== undefined ) ? domElement : document;
 
   // API
@@ -120,6 +121,20 @@ function TrackballControls( camera, domElement ) {
       });
   };
 
+   var getObjectUnderMouse = (function () {
+       let _camera = _this.camera;
+       let _mouse = new THREE.Vector2();
+       let _raycaster = new THREE.Raycaster();
+       let rect = domElement.getBoundingClientRect();
+       let _objects = _this.objects;
+       return function getObjectUnderMouse( event ) {
+           _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
+           _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
+           _raycaster.setFromCamera( _mouse, _camera );
+           return _raycaster.intersectObjects( _objects );
+       };
+   } () );
+
   var getMouseOnScreen = ( function () {
 
     var vector = new THREE.Vector2();
@@ -175,7 +190,7 @@ function TrackballControls( camera, domElement ) {
 
         eyeDirection.copy( _eye ).normalize();
         cameraUpDirection.copy( _this.camera.up ).normalize();
-        cameraSidewaysDirection.crossVectors( cameraUpDirection, eyeDirection ).normalize();
+        cameraSidewaysDirection.crossVectors( cameraUpDirection, eyeDirection ).normalize();          // 归一化成单位向量
 
         cameraUpDirection.setLength( _moveCurr.y - _movePrev.y );
         cameraSidewaysDirection.setLength( _moveCurr.x - _movePrev.x );
@@ -362,20 +377,12 @@ function TrackballControls( camera, domElement ) {
   // listeners
 
 
-    function onHoverUse() {
+    function onhover( event ) {
+        if ( _this.enabled === false ) return;
         if (_this.objects.length == 0) return;
-        var _camera = _this.camera;
-        var _mouse = new THREE.Vector2();
-        var _raycaster = new THREE.Raycaster();
-        var rect = domElement.getBoundingClientRect();
-        var _objects = _this.objects;
-
-        _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
-        _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
-
-        _raycaster.setFromCamera( _mouse, _camera );
-
-        var intersects = _raycaster.intersectObjects( _objects );
+        // event.preventDefault();     // 阻止默认事件发生
+        // event.stopPropagation();    // 不再往其他Listener派发
+        var intersects = getObjectUnderMouse(event);
 
         if ( intersects.length > 0 ) {
 
@@ -386,7 +393,10 @@ function TrackballControls( camera, domElement ) {
                 _this.dispatchEvent( { type: 'hoveron', object: object } );
 
                 domElement.style.cursor = 'pointer';
-                domElement.title = object.name;
+                domElement.title = object.name +
+                    '\nx:' + object.position.x +
+                    '\ny:' + object.position.y +
+                    '\nz:' + object.position.z;
                 _this._hovered = object;
 
             }
@@ -450,6 +460,38 @@ function TrackballControls( camera, domElement ) {
 
     event.preventDefault();
     event.stopPropagation();
+    var intersects = getObjectUnderMouse(event);
+
+    if ( intersects.length > 0 ) {
+
+        var object = intersects[ 0 ].object;
+
+        if ( _this._selected !== object ) {
+
+            _this.dispatchEvent( { type: 'hoveron', object: object } );
+
+            // domElement.style.cursor = 'pointer';
+            // domElement.title = object.name +
+            //     '\nx:' + object.position.x +
+            //     '\ny:' + object.position.y +
+            //     '\nz:' + object.position.z;
+            _this._selected = object;
+
+        }
+
+    } else {
+
+        if ( _this._selected !== null ) {
+
+            _this.dispatchEvent( { type: 'hoveroff', object: this._selected } );
+
+            // domElement.style.cursor = 'auto';
+            // domElement.title = '';
+            _this._selected = null;
+
+        }
+
+    }
 
     if ( _state === STATE.NONE ) {
 
@@ -474,7 +516,7 @@ function TrackballControls( camera, domElement ) {
 
     }
 
-    document.removeEventListener('mousemove', onHoverUse);
+    document.removeEventListener('mousemove', onhover);
     document.addEventListener( 'mousemove', mousemove, false );
     document.addEventListener( 'mouseup', mouseup, false );
 
@@ -517,7 +559,7 @@ function TrackballControls( camera, domElement ) {
 
     document.removeEventListener( 'mousemove', mousemove );
     document.removeEventListener( 'mouseup', mouseup );
-    document.addEventListener( 'mousemove', onHoverUse, false );
+    document.addEventListener( 'mousemove', onhover, false );
     _this.dispatchEvent( endEvent );
 
   }

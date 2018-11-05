@@ -24,8 +24,8 @@
                 webGLRenderer: null,
                 camera: null,
                 controls: null,
-                outputWidth: document.getElementById('main').clientWidth,
-                outputHeight: window.innerHeight,
+                outputWidth: null,
+                outputHeight: null,
                 bnOption: this.$store.state.bnOption
             }
         },
@@ -54,7 +54,7 @@
                     var enable = this.bnOption.allMaterial.surfMaterial.clip;
                     var clipArr = [];
                     if (enable) clipArr = [
-                        new THREE.Plane(new THREE.Vector3(1, 0, 0), -2.0)
+                        new THREE.Plane(new THREE.Vector3(1, 0, 0),surfMesh.geometry.boundingSphere.center.x + 1)
                     ];
                     this.webGLRenderer.localClippingEnabled = enable;
                     surfMesh.material.setValues( {
@@ -85,7 +85,9 @@
                 const WebGLWidth = this.outputWidth * 0.8;
                 const WebGLHeight = this.outputHeight;
                 const camera = this.camera = new THREE.PerspectiveCamera(45, WebGLWidth / WebGLHeight, 0.1, 1000);
-                const webGLRenderer = this.webGLRenderer = new THREE.WebGLRenderer();
+                const webGLRenderer = this.webGLRenderer = new THREE.WebGLRenderer({
+                    preserveDrawingBuffer: true   // required to support .toDataURL()
+                });
                 const spotLight = new THREE.SpotLight(0xffffff);
                 webGLRenderer.setClearColor(new THREE.Color(0xffffff));
                 webGLRenderer.setSize(WebGLWidth, WebGLHeight);
@@ -93,9 +95,8 @@
                 // webGLRenderer.localClippingEnabled = true;
 
                 // position and point the camera to the center of the scene
-                camera.position.x = 200;
-                camera.position.y = 0;
-                camera.position.z = 0;
+                camera.position.set(0, 250, 0);
+                camera.up.set(0, 0, 1);         // camera.up 默认为(0, 1, 0)
                 camera.lookAt(new THREE.Vector3(0, 0, 0));
 
                 // add spotlight for the shadows
@@ -118,12 +119,24 @@
                 }
                 animate();
             },
+            removeObject: function( oldObject ){
+                if (oldObject instanceof THREE.Mesh) {
+                    this.scene.remove(oldObject);
+                    oldObject.material.dispose();
+                    oldObject.geometry.dispose();
+                    return;
+                }
+                if (oldObject instanceof THREE.Group) {
+                    this.scene.remove(oldObject);
+                    oldObject.children.forEach(this.removeObject);
+                    return;
+                }
+            },
             loadsurf: function(){
                 const surfloader = new SurfLoader();
                 const scene = this.scene;
                 const surfMaterial = this.bnOption.allMaterial.surfMaterial;
-                var oldObject = scene.getObjectByName('surface');
-                if (oldObject instanceof THREE.Mesh) scene.remove(oldObject);
+                this.removeObject(scene.getObjectByName('surface'));
                 surfloader.load( this.bnOption.allDATA['surfDATA'], function (geometry) {
                     // var plane = THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
                     var mat = new THREE.MeshLambertMaterial({
@@ -140,24 +153,17 @@
                     // mesh.castShadow = true;
                     mesh.name = 'surface';
                     scene.add(mesh);
-                    var sphereMaterial = new THREE.MeshLambertMaterial({ color: 0 });
-                    var sphere = new THREE.Mesh(
-                        new THREE.SphereGeometry(1.0),
-                        sphereMaterial
-                    );
-                    sphere.position.set(1,0,0);
-                    scene.add(sphere);
+                    console.log(mesh);
                 } );
+                // this.controls.noPan = true;
                 delete this.bnOption.allDATA['surfDATA'];
             },
             loadnode: function(){
                 const nodeloader = new NodeLoader();
                 const scene = this.scene;
                 const controls = this.controls;
-                var oldObject = scene.getObjectByName('node');
-                if (oldObject instanceof THREE.Group) scene.remove(oldObject);
-                oldObject = scene.getObjectByName('edge');
-                if (oldObject instanceof THREE.Group) scene.remove(oldObject);
+                this.removeObject(scene.getObjectByName('node'));
+                this.removeObject(scene.getObjectByName('edge'));
 
                 var matlabColor = [
                     0xFFFF00,  //yellow
@@ -186,9 +192,9 @@
             loadedge: function(){
                 const edgeloader = new EdgeLoader();
                 const scene = this.scene;
-                var oldObject = scene.getObjectByName('edge');
-                if (oldObject instanceof THREE.Group) scene.remove(oldObject);
+                this.removeObject(scene.getObjectByName('edge'));
                 var nodeObjects = scene.getObjectByName('node').children;
+                if (nodeObjects.length == 0) return;
                 var group = new THREE.Group();
                 group.name = 'edge';
                 edgeloader.load( this.bnOption.allDATA['edgeDATA'], function ( i, j, weight ) {
@@ -242,22 +248,28 @@
                     var alpha = img[((((z * bound[2]) + y) * bound[1]) + x)] / 116;
                     return Math.round(alpha * 0xffffff);
                 }
-                for (let face of surfObject.geometry.faces){
-                    var color = [];
-                    var av = affineToValue( surfObject.geometry.vertices[face.a] );
-                    var bv = affineToValue( surfObject.geometry.vertices[face.b] );
-                    var cv = affineToValue( surfObject.geometry.vertices[face.c] );
-                    if ( av + bv + cv != 0) {
-                        color[0] = new THREE.Color(av);
-                        color[1] = new THREE.Color(bv);
-                        color[2] = new THREE.Color(cv);
-                        face.vertexColors = color;
-                    }
+                var vertexPosition = surfObject.geometry.attributes.position.array;
+                var vertexColor = surfObject.geometry.attributes.color.array;
+                var rgbValue;
+                var colorRGB = new THREE.Color();
+                for (var i = 0; i < vertexPosition.length; i+=3){
+                    rgbValue = affineToValue( {
+                        x:vertexPosition[i],
+                        y:vertexPosition[i+1],
+                        z:vertexPosition[i+2]
+                    } );
+                    if (rgbValue == 0) continue;
+                    colorRGB.set(rgbValue);
+                    vertexColor[i] = colorRGB.r;
+                    vertexColor[i+1] = colorRGB.g;
+                    vertexColor[i+2] = colorRGB.b;
                 }
-                surfObject.geometry.elementsNeedUpdate = true;// 一次性通知需要更新
+                surfObject.geometry.attributes.color.needsUpdate = true;
             },
         },
         mounted() {
+            this.outputWidth = document.getElementById('main').clientWidth;
+            this.outputHeight = window.innerHeight;
             this.onOutputWindowResize();
             window.addEventListener('resize', this.onOutputWindowResize);
             this.init();

@@ -23,7 +23,7 @@ import * as THREE from 'three'
     this.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
     this.addAttribute( 'uv', new THREE.Float32BufferAttribute( uvs, 2 ) );
 
-};
+}
 
 LineSegmentsGeometry.prototype = Object.assign( Object.create( THREE.InstancedBufferGeometry.prototype ), {
 
@@ -131,7 +131,7 @@ LineSegmentsGeometry.prototype = Object.assign( Object.create( THREE.InstancedBu
 
     fromMesh: function ( mesh ) {
 
-        this.fromWireframeGeometry( new WireframeGeometry( mesh.geometry ) );
+        this.fromWireframeGeometry( new THREE.WireframeGeometry( mesh.geometry ) );
 
         // set colors, maybe
 
@@ -272,102 +272,13 @@ function LineSegments2( geometry, material ) {
     this.geometry = geometry !== undefined ? geometry : new LineSegmentsGeometry();
     this.material = material !== undefined ? material : new LineMaterial( { color: Math.random() * 0xffffff } );
 
-};
+}
 
 LineSegments2.prototype = Object.assign( Object.create( THREE.Mesh.prototype ), {
 
     constructor: LineSegments2,
 
     isLineSegments2: true,
-
-    computeLineDistances: ( function () { // for backwards-compatability, but could be a method of LineSegmentsGeometry...
-
-        var start = new THREE.Vector3();
-        var end = new THREE.Vector3();
-
-        return function computeLineDistances() {
-
-            var geometry = this.geometry;
-
-            var instanceStart = geometry.attributes.instanceStart;
-            var instanceEnd = geometry.attributes.instanceEnd;
-            var lineDistances = new Float32Array( 2 * instanceStart.data.count );
-
-            for ( var i = 0, j = 0, l = instanceStart.data.count; i < l; i ++, j += 2 ) {
-
-                start.fromBufferAttribute( instanceStart, i );
-                end.fromBufferAttribute( instanceEnd, i );
-
-                lineDistances[ j ] = ( j === 0 ) ? 0 : lineDistances[ j - 1 ];
-                lineDistances[ j + 1 ] = lineDistances[ j ] + start.distanceTo( end );
-
-            }
-
-            var instanceDistanceBuffer = new THREE.InstancedInterleavedBuffer( lineDistances, 2, 1 ); // d0, d1
-
-            geometry.addAttribute( 'instanceDistanceStart', new THREE.InterleavedBufferAttribute( instanceDistanceBuffer, 1, 0 ) ); // d0
-            geometry.addAttribute( 'instanceDistanceEnd', new THREE.InterleavedBufferAttribute( instanceDistanceBuffer, 1, 1 ) ); // d1
-
-            return this;
-
-        };
-
-    }() ),
-
-    copy: function ( source ) {
-
-        // todo
-
-        return this;
-
-    }
-
-} );
-
-function WireframeGeometry2( geometry ) {
-
-    LineSegmentsGeometry.call( this );
-
-    this.type = 'WireframeGeometry2';
-
-    this.fromWireframeGeometry( new THREE.WireframeGeometry( geometry ) );
-
-    // set colors, maybe
-
-};
-
-WireframeGeometry2.prototype = Object.assign( Object.create( LineSegmentsGeometry.prototype ), {
-
-    constructor: WireframeGeometry2,
-
-    isWireframeGeometry2: true,
-
-    copy: function ( source ) {
-
-        // todo
-
-        return this;
-
-    }
-
-} );
-
-function Wireframe( geometry, material ) {
-
-    THREE.Mesh.call( this );
-
-    this.type = 'Wireframe';
-
-    this.geometry = geometry !== undefined ? geometry : new LineSegmentsGeometry();
-    this.material = material !== undefined ? material : new LineMaterial( { color: Math.random() * 0xffffff } );
-
-};
-
-Wireframe.prototype = Object.assign( Object.create( THREE.Mesh.prototype ), {
-
-    constructor: Wireframe,
-
-    isWireframe: true,
 
     computeLineDistances: ( function () { // for backwards-compatability, but could be a method of LineSegmentsGeometry...
 
@@ -422,7 +333,7 @@ function Line2( geometry, material ) {
     this.geometry = geometry !== undefined ? geometry : new LineGeometry();
     this.material = material !== undefined ? material : new LineMaterial( { color: Math.random() * 0xffffff } );
 
-};
+}
 
 Line2.prototype = Object.assign( Object.create( LineSegments2.prototype ), {
 
@@ -446,7 +357,7 @@ function LineGeometry() {
 
     this.type = 'LineGeometry';
 
-};
+}
 
 LineGeometry.prototype = Object.assign( Object.create( LineSegmentsGeometry.prototype ), {
 
@@ -888,7 +799,7 @@ function LineMaterial( parameters ) {
 
     this.setValues( parameters );
 
-};
+}
 
 LineMaterial.prototype = Object.create( THREE.ShaderMaterial.prototype );
 LineMaterial.prototype.constructor = LineMaterial;
@@ -911,4 +822,4 @@ LineMaterial.prototype.copy = function ( source ) {
 
 };
 
-export{ LineSegmentsGeometry, LineSegments2, WireframeGeometry2, Wireframe, Line2, LineGeometry, LineMaterial };
+export{ LineSegmentsGeometry, LineSegments2, Line2, LineGeometry, LineMaterial };
