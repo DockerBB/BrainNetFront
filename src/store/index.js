@@ -22,9 +22,6 @@ const mutations = {
     SET_ROLE(state, val) {
         state.user.role = val
     },
-    SET_BN(state, val) {
-        state.bnOption.flag = val
-    },
     SET_LOGOUT(state) {
         state.user = ''
         cache.removeToken()

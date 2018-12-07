@@ -31,7 +31,9 @@
         },
         watch: {
             'bnOption.flag': function () {
+                console.log('开始绘制曲面');
                 if (this.bnOption.flag) {
+                    console.log('绘制曲面完成');
                     if (this.bnOption.allDATA['surfDATA'] != null) this.loadsurf();
                     if (this.bnOption.allDATA['nodeDATA'] != null) this.loadnode();
                     if (this.bnOption.allDATA['edgeDATA'] != null) this.loadedge();
@@ -182,6 +184,7 @@
                         mesh.material.color.set( matlabColor[ ObjectColorId[ index ] ] );
                         var radius = ObjectRadius[index] + 0.1;
                         mesh.scale.set(radius, radius, radius);
+                        mesh.code = ObjectColorId;
                         group.add(mesh);
                     });
                     scene.add(group);

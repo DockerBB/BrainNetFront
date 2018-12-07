@@ -7,6 +7,7 @@ const index = () => import('@/page/index/index')
 const home = () => import('@/page/index/children/home/home')
 const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
 const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
+const gretna = () => import('@/page/index/children/gretna/gretna')
 // login
 const login = () => import('@/page/login/login')
 // other
@@ -32,6 +33,15 @@ export const sideRoutes = [
         meta: {
             icon: 'el-icon-my-home',
             title: '主页'
+        }
+    },
+    {
+        name: 'gretna',
+        path: 'networkanalysis',
+        component: gretna,
+        meta: {
+            icon: 'el-icon-share',
+            title: '网络分析'
         }
     },
     {

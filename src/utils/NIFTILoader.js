@@ -10,7 +10,7 @@ function NIFTILoader() {
 Object.assign( NIFTILoader.prototype , {
   constructor: NIFTILoader,
   load: function (buffer) {
-    // console.log(buffer);
+    console.log(buffer);
     if (NIFTI.isNIFTI(buffer)) {
       this.niftiHeader = NIFTI.readHeader(buffer);
       console.log(this.niftiHeader.toFormattedString());
