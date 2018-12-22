@@ -1,5 +1,5 @@
 <template>
-    <div id="gretna">
+    <div id="gretna" :style="background">
         <el-row type="flex" justify="center">
             <el-col type="flex" style="width: auto!important;">
                 <el-card class="box-card">
@@ -89,10 +89,10 @@
                     :data="dialogData"
                     node-key="id"
                     :expand-on-click-node="true">
-                    <span class="custom-tree-node" slot-scope="{ node, data }">
-                        <span v-if="data.children === undefined" @click="() => getRealNetURI(node)"><img src="@/assets/img/wendang.png" height="16" width="16"/>{{ node.label }}</span>
-                        <span v-else><img src="@/assets/img/wenjianjia.png" height="16" width="16"/>{{ node.label }}</span>
-                    </span>
+                <span class="custom-tree-node" slot-scope="{ node, data }">
+                    <span v-if="data.children === undefined" @click="() => getRealNetURI(node)"><img src="@/assets/img/wendang.png" height="16" width="16"/>{{ node.label }}</span>
+                    <span v-else><img src="@/assets/img/wenjianjia.png" height="16" width="16"/>{{ node.label }}</span>
+                </span>
             </el-tree>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="dialogTableVisible = false">取 消</el-button>
@@ -107,6 +107,11 @@
         name: 'gretna',
         data() {
             return {
+                background: {
+                    backgroundImage: "url(" + require("@/assets/img/background.jpg") + ")",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat"
+                },
                 dialogTableVisible: false,
                 dialogData: null,
                 selectLabel: null,
@@ -204,6 +209,9 @@
 </script>
 <style lang='stylus'>
     #gretna {
+        .box-card {
+            opacity: 0.9;
+        }
     }
     .text {
         font-size: 14px;

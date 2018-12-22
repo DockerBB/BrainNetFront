@@ -8,6 +8,7 @@ const home = () => import('@/page/index/children/home/home')
 const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
 const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
 const gretna = () => import('@/page/index/children/gretna/gretna')
+const networkViewer = () => import('@/page/index/children/networkViewer/networkViewer')
 // login
 const login = () => import('@/page/login/login')
 // other
@@ -31,8 +32,8 @@ export const sideRoutes = [
         path: 'home',
         component: home,
         meta: {
-            icon: 'el-icon-my-home',
-            title: '主页'
+            icon: 'el-icon-my-home'
+            // title: '主页'
         }
     },
     {
@@ -40,8 +41,16 @@ export const sideRoutes = [
         path: 'networkanalysis',
         component: gretna,
         meta: {
-            icon: 'el-icon-share',
-            title: '网络分析'
+            icon: 'el-icon-share'
+            // title: '网络分析'
+        }
+    },
+    {
+        name: 'networkviewer',
+        path: 'networkViewer',
+        component: networkViewer,
+        meta: {
+            icon: 'el-icon-share'
         }
     },
     {
@@ -53,7 +62,7 @@ export const sideRoutes = [
         },
         meta: {
             icon: 'el-icon-menu',
-            title: '脑神经网络',
+            // title: '脑神经网络',
             switchon: true
         }
     }

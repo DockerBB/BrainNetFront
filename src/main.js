@@ -7,6 +7,7 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import VueProgressBar from 'vue-progressbar'
 import vuePositionSticky from 'vue-position-sticky'
+import i18n from '@/language'
 // 自定义
 import '@/assets/css/reset.css'
 import '@/assets/css/global.css'
@@ -20,7 +21,10 @@ import '@/mock'
 Vue.config.productionTip = false
 
 // 第三方
-Vue.use(ElementUI, { size: 'small' })
+Vue.use(ElementUI, {
+    size: 'small',
+    i18n: (key, value) => i18n.t(key, value)
+})
 Vue.use(VueProgressBar)
 Vue.use(vuePositionSticky)
 // 自定义
@@ -32,6 +36,7 @@ Object.keys(filters).forEach(key => {
 })
 
 new Vue({
+    i18n,
     router,
     store,
     render: h => h(App)

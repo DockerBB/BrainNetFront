@@ -3,7 +3,17 @@
     <div id="WebGL-output">
     </div>
     <div id="Info-output" style="background-color: #3a8ee6; width: 100%;">
-      <p>11111</p>
+      <el-button style="width: 100%;text-align: left" @click="viewDirection('front')">front hemishpere</el-button>
+      <br/>
+      <el-button style="width: 100%;text-align: left" @click="viewDirection('back')">back hemishpere</el-button>
+      <br/>
+      <el-button style="width: 100%;text-align: left" @click="viewDirection('left')">left hemishpere</el-button>
+      <br/>
+      <el-button style="width: 100%;text-align: left" @click="viewDirection('right')">right hemishpere</el-button>
+      <br/>
+      <el-button style="width: 100%;text-align: left" @click="viewDirection('top')">top hemishpere</el-button>
+      <br/>
+      <el-button style="width: 100%;text-align: left" @click="viewDirection('bottom')">bottom hemishpere</el-button>
     </div>
   </el-container>
 </template>
@@ -88,7 +98,8 @@
                 const WebGLHeight = this.outputHeight;
                 const camera = this.camera = new THREE.PerspectiveCamera(45, WebGLWidth / WebGLHeight, 0.1, 1000);
                 const webGLRenderer = this.webGLRenderer = new THREE.WebGLRenderer({
-                    preserveDrawingBuffer: true   // required to support .toDataURL()
+                    preserveDrawingBuffer: true,   // required to support .toDataURL()
+                    opacity: 0.5
                 });
                 const spotLight = new THREE.SpotLight(0xffffff);
                 webGLRenderer.setClearColor(new THREE.Color(0xffffff));
@@ -269,6 +280,29 @@
                 }
                 surfObject.geometry.attributes.color.needsUpdate = true;
             },
+            viewDirection: function (dLabel) {
+                const camera = this.camera;
+                if (dLabel === 'front') {
+                    camera.position.set(0, 250, 0);
+                    camera.up.set(0, 0, 1);         // camera.up 默认为(0, 1, 0)
+                }else if (dLabel === 'back') {
+                    camera.position.set(0, -250, 0);
+                    camera.up.set(0, 0, 1);         // camera.up 默认为(0, 1, 0)
+                }else if (dLabel === 'left') {
+                    camera.position.set(-250, 0, 0);
+                    camera.up.set(0, 0, 1);         // camera.up 默认为(0, 1, 0)
+                }else if (dLabel === 'right') {
+                    camera.position.set(250, 0, 0);
+                    camera.up.set(0, 0, 1);         // camera.up 默认为(0, 1, 0)
+                }else if (dLabel === 'top') {
+                    camera.position.set(0, 0, 250);
+                    camera.up.set(0, 1, 0);         // camera.up 默认为(0, 1, 0)
+                }else if (dLabel === 'bottom') {
+                    camera.position.set(0, 0, -250);
+                    camera.up.set(0, 1, 0);         // camera.up 默认为(0, 1, 0)
+                }
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
+            }
         },
         mounted() {
             this.outputWidth = document.getElementById('main').clientWidth;

@@ -43,7 +43,9 @@ export default {
             if (route.meta && route.meta.title) {
                 return route.meta.title
             } else {
-                return route.name
+                // return translation(route.name, 'routes')
+                // return route.name
+                return this.$t('routes.' + route.name)
             }
         }
     }

@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import i18n from '@/language'
 import cache from '@/utils/cache'
 import { getLogin, getUser } from '@/api'
 
@@ -8,11 +9,16 @@ Vue.use(Vuex)
 const state = {
     logs: [], // 错误日志
     user: '', // 用户信息
+    language: 'zh',
     bnOption: { flag: false, allMaterial: {} }
 }
 const getters = {
 }
 const mutations = {
+    set_language(state, lang) {
+        i18n.locale = lang
+        state.language = lang
+    },
     SET_LOGS(state, error) {
         state.logs.push(error)
     },

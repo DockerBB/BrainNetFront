@@ -1,7 +1,7 @@
 <template>
-    <div id="login">
+    <div id="login" :style="background">
         <div class="login-wrapper">
-            <div class="title">vue-bolg-template</div>
+            <div class="title">Brain Science Lab</div>
             <el-form class="login-form" :model="form" @submit.native.prevent="verify">
                 <el-form-item>
                     <!-- username -->
@@ -32,6 +32,12 @@ export default {
     name: 'login',
     data() {
         return {
+            background: {
+                backgroundImage: 'url(' + require('@/assets/img/background.jpg') + ')',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                opacity: 0.7
+            },
             form: {
                 username: 'uncleLian',
                 password: '123456'
@@ -66,7 +72,8 @@ export default {
     position: relative;
     width: 100%;
     height: 100vh;
-    background: #464c5b;
+    /*background: #464c5b;*/
+    background: #ffffff;
     overflow: hidden;
     .login-wrapper {
         position: absolute;
@@ -79,7 +86,8 @@ export default {
             display: block;
             font-size: 26px;
             font-weight: 400;
-            color: #eee;
+            /*color: #eee;*/
+            color: #3a8ee6;
             margin: 0px auto 50px;
             text-align: center;
             font-weight: bold;

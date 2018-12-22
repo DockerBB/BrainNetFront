@@ -33,18 +33,63 @@ Object.assign( EdgeLoader.prototype ,{
 
   parse: function ( data, onload ) {
       var list = [];
-      data.split(/\n/g).splice(1).forEach(function(row, i){
-          row.split(/\s/g).forEach(function(cell, j){
-              if (cell != 0) {
-                  list.push([i, j, parseFloat( cell )]);
-                  // onload( i, j, parseFloat( cell ) );
-                  // onload( i - 1, j, cell );
-              }
-          });
+      var i = 0;
+      data.split(/\n/g).forEach(function(row){
+          if (row[0] != '#' && row[0]) {
+              row.split(/\s/g).forEach(function (cell, j) {
+                  if (cell && cell != 0) {
+                      list.push([i, j, parseFloat(cell)]);
+                  }
+              });
+              i++;
+          }
       });
       list.forEach(function (item) {
           onload( item[0], item[1], item[2] );
       })
+  },
+
+  loadMatrix: function (data) {
+      var matrix = [];
+      var i = 0;
+      data.split(/\n/g).forEach(function(row){
+          if (row[0] != '#' && row[0]) {
+              var mrow = []
+              row.split(/\s/g).forEach(function (cell, j) {
+                  if (cell) mrow[j] = parseFloat(cell);
+              });
+              matrix[i] = mrow;
+              i++;
+          }
+      });
+      return matrix;
+  },
+  loadAList: function (data) {
+      var list = [];
+      var i = 0, vf = 0,
+          max = -100,
+          min = 100;
+      data.split(/\n/g).forEach(function(row){
+          if (row[0] != '#' && row[0]) {
+              row.split(/\s/g).forEach(function (cell, j) {
+                  if (cell) {
+                      if (cell != 0){
+                          vf = parseFloat(cell);
+                          list.push([i, j, vf]);
+                      }
+                      max = max >= vf ? max : vf;
+                      min = min <= vf ? min : vf;
+                  }
+              });
+              i++;
+          }
+      });
+      return {
+          n: i,
+          list: list,
+          max: max,
+          min: min
+      }
   }
 
 } );
