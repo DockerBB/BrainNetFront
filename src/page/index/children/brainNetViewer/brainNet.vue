@@ -12,17 +12,17 @@
         <div id="controlpanel">
             <el-popover
                     placement="right"
-                    width="300"
+                    width="400"
                     trigger="hover">
                 <h3>{{ translations('surfAttr') }}</h3>
-                <el-form v-if="bnOption.allMaterial.surfMaterial" :label-position="'left'" label-width="100px" :model="bnOption.allMaterial.surfMaterial">
-                    <el-form-item label="脑曲面颜色">
+                <el-form v-if="bnOption.allMaterial.surfMaterial" :label-position="'left'" label-width="200px" :model="bnOption.allMaterial.surfMaterial">
+                    <el-form-item label="Surface Color">
                         <el-color-picker v-model="bnOption.allMaterial.surfMaterial.color"></el-color-picker>
                     </el-form-item>
-                    <el-form-item label="脑曲面透明度">
+                    <el-form-item label="Surface Opacity">
                         <el-slider v-model="bnOption.allMaterial.surfMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
                     </el-form-item>
-                    <el-form-item label="脑曲切面">
+                    <el-form-item label="Surface Clip">
                         <el-switch
                                 v-model="bnOption.allMaterial.surfMaterial.clip"
                                 active-color="#13ce66"
@@ -46,13 +46,22 @@
             <br/>
             <el-popover
                     placement="right"
-                    width="300"
+                    width="400"
                     trigger="hover">
                 <h3>{{ translations('edgeAttr') }}</h3>
                 <div v-if="bnOption.allMaterial.lineMaterial" style="text-align: right; margin: 0">
-                    <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :max="50" :step="5" show-input show-stops></el-slider>
-                    <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color"></el-color-picker>
-                    <el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
+                    <el-form v-if="bnOption.allMaterial.lineMaterial" :label-position="'left'" label-width="200px" :model="bnOption.allMaterial.lineMaterial">
+                        <el-form-item label="Connection Weight Range">
+                            <el-slider v-model="lineWidth" :min="bnOption.allMaterial.lineMaterial.minWeight" :max="bnOption.allMaterial.lineMaterial.maxWeight" :range="true" :step="bnOption.allMaterial.lineMaterial.step" show-stops></el-slider>
+                            <el-button @click="() => bnOption.allMaterial.lineMaterial.lineWidth = lineWidth">Use Range</el-button>
+                        </el-form-item>
+                        <el-form-item label="Connection Opacity">
+                            <el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
+                        </el-form-item>
+                        <el-form-item label="Connection Color">
+                            <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color"></el-color-picker>
+                        </el-form-item>
+                    </el-form>
                 </div>
                 <el-button slot="reference" type="text">{{ translations('edgeAttr') }}</el-button>
             </el-popover>
@@ -121,6 +130,7 @@
           nodeLabel: null,
           edgeLabel: null,
           niftiLabel: null,
+          lineWidth: [0, 1],
           bnOption: this.$store.state.bnOption
       }
     },
@@ -142,18 +152,24 @@
               node = node.parent
           }
           const self = this;
-          if (this.fileType === 'nifti') request(url, 'arrayBuffer').then(data => {
+          if (this.fileType === 'nifti') fetch('http:' + window.g.API_URL + '/' + url, {
+              headers: {
+                  'Accept': 'application/octet-stream',
+                  'content-type': 'application/octet-stream'
+              },
+              method: 'GET'
+          }).then(data => {
               if (data) {
                   delete self.bnOption.NIFTIModel;
                   var loader = self.bnOption.NIFTIModel = new NIFTILoader();
-                  loader.load(data);
+                  loader.load(data.arrayBuffer());
                   self.bnOption.flag = true;
               }
-          });
-          else request(url, 'get').then(data => {
+          })
+          else this.$axios.get(url).then(data => {
               if (data){
                   delete self.bnOption.allDATA[ self.fileType + 'DATA' ];
-                  self.bnOption.allDATA[ self.fileType + 'DATA' ] = data;
+                  self.bnOption.allDATA[ self.fileType + 'DATA' ] = data.data;
                   self.bnOption.flag = true;
               }
           });
@@ -204,8 +220,8 @@
         },
         setfilelist: function (resForDialog) {
             this.dialogData = [];
-            request('/getfilelist','POST',resForDialog.acceptType).then(data => {
-              this.dialogData = data.data;
+            this.$axios.post('/getfilelist',resForDialog.acceptType).then(res => {
+              this.dialogData = res.data.data;
             });
             this.dialogTitle = this.translations(resForDialog.fileType + 'Label');
             this.fileType = resForDialog.fileType;
@@ -221,8 +237,10 @@
             return this.$t('brainViewer.' + key)
         }
     },
-    mounted() {
+    created() {
         this.initLocal();
+    },
+    mounted() {
         this.bnOption.flag = false;
         this.bnOption.allDATA = {};
         this.bnOption.allMaterial = {
@@ -234,7 +252,10 @@
           lineMaterial: {
               color: '#ffffe0',
               opacity: 1,
-              lineWidth: 1
+              lineWidth: [0,1],
+              step:1,
+              minWeight:0,
+              maxWeight:10
           }
         }
         this.bnOption.NIFTIModel = null;

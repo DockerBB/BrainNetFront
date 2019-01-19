@@ -2,14 +2,14 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import i18n from '@/language'
 import cache from '@/utils/cache'
-import { getLogin, getUser } from '@/api'
+import { getLogin, getUser, signOn } from '@/api'
 
 Vue.use(Vuex)
 
 const state = {
     logs: [], // 错误日志
-    user: '', // 用户信息
-    language: 'zh',
+    user: '', // 用户信息{headimgurl,nickname}
+    language: 'en',
     bnOption: { flag: false, allMaterial: {} }
 }
 const getters = {
@@ -37,9 +37,12 @@ const actions = {
     // 获取登录数据
     async GET_LOGIN_DATA({ commit }, params) {
         return new Promise((resolve, reject) => {
-            getLogin(params).then(res => {
-                // console.log('login', res)
-                if (res && res.token) {
+            (params.name === undefined ? getLogin(params) : signOn(params)).then(res => {
+                if (res && res.data.token) {
+                    console.log(res.data.token)
+                    res.data.nickname = res.data.name
+                    delete res.data.name
+                    commit('SET_USER', res.data)
                     cache.setToken(res.token)
                     resolve(res)
                 } else {

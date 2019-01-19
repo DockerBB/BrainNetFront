@@ -6,20 +6,20 @@
                     <el-breadcrumb-item v-for="(item, index) in breadcrumb" :key="index" :to="item.path">{{item.meta.title || $t('routes.' + item.name) }}</el-breadcrumb-item>
                 </el-breadcrumb>
             </div>
-            <!-- i18n -->
-            <div class="right-item">
-                <el-dropdown placement="top-end" @command="onLanguageSelected">
-                    <div class="i18n">
-                        <span>{{$t('translations')}}</span>
-                        <i class="el-icon-caret-bottom"></i>
-                    </div>
-                    <el-dropdown-menu slot="dropdown">
-                        <el-dropdown-item command="zh" :disabled="language === 'zh'">中文</el-dropdown-item>
-                        <el-dropdown-item command="en" :disabled="language === 'en'">English</el-dropdown-item>
-                    </el-dropdown-menu>
-                </el-dropdown>
-            </div>
             <div class="header-right">
+                <!-- i18n -->
+                <div class="right-item">
+                    <el-dropdown placement="top-end" @command="onLanguageSelected">
+                        <div class="i18n">
+                            <span>{{$t('translations')}}</span>
+                            <i class="el-icon-caret-bottom"></i>
+                        </div>
+                        <el-dropdown-menu slot="dropdown">
+                            <el-dropdown-item command="zh" :disabled="language === 'zh'">中文</el-dropdown-item>
+                            <el-dropdown-item command="en" :disabled="language === 'en'">English</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </div>
                 <div class="right-item">
                     <div class="user" v-if="user">
                         <el-dropdown placement="top-end" @command="onUserSelected">
@@ -29,7 +29,7 @@
                             </div>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item :disabled="true">v2.0.0</el-dropdown-item>
-                                <el-dropdown-item divided command="exit">退出登录</el-dropdown-item>
+                                <el-dropdown-item divided command="exit">{{ $t('logOut') }}</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
                     </div>

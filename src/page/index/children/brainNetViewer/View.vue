@@ -25,6 +25,7 @@
     import { TrackballControls } from '@/utils/TrackballControls'
     import { NodeLoader } from '@/utils/NodeLoader'
     import { EdgeLoader } from '@/utils/EdgeLoader'
+    import cache from '@/utils/cache'
     import * as MeshLine from '@/utils/MeshLine'
     export default {
         name: 'bn-view',
@@ -72,6 +73,14 @@
                     surfMesh.material.setValues( {
                         clippingPlanes: clipArr
                     } );
+                }
+            },
+            'bnOption.allMaterial.lineMaterial.lineWidth' : function () {
+                console.log('egde')
+                var edge = this.scene.getObjectByName('edge');
+                if (edge) {
+                    var lineWidth = this.bnOption.allMaterial.lineMaterial.lineWidth;
+                    this.drawMatrix(lineWidth[0], lineWidth[1]);
                 }
             },
         },
@@ -205,13 +214,28 @@
             },
             loadedge: function(){
                 const edgeloader = new EdgeLoader();
+                let Alist = edgeloader.loadAList(this.bnOption.allDATA['edgeDATA']);
+                cache.setLocal('edgeAlist', Alist.list);
+                this.drawMatrix(Alist.min, Alist.max, Alist.list);
+                this.bnOption.allMaterial.lineMaterial.minWeight = Alist.min;
+                this.bnOption.allMaterial.lineMaterial.maxWeight = Alist.max;
+                this.bnOption.allMaterial.lineMaterial.step = (Alist.max - Alist.min) / 10;
+                this.bnOption.allMaterial.lineMaterial.lineWidth = [Alist.min, Alist.max];
+                delete this.bnOption.allDATA['edgeDATA'];
+            },
+            drawMatrix:  function ( lowWeight, heightWeight, alist ) {
                 const scene = this.scene;
                 this.removeObject(scene.getObjectByName('edge'));
                 var nodeObjects = scene.getObjectByName('node').children;
-                if (nodeObjects.length == 0) return;
+                if (nodeObjects.length === 0) return;
+                if ( alist === undefined ) alist = JSON.parse(cache.getLocal('edgeAlist'));
+                if ( !alist ) return;
                 var group = new THREE.Group();
                 group.name = 'edge';
-                edgeloader.load( this.bnOption.allDATA['edgeDATA'], function ( i, j, weight ) {
+                scene.add( group );
+                alist.forEach(v=>{
+                    let i = v[0], j = v[1], weight = v[2];
+                    if ( weight < lowWeight || weight > heightWeight ) return;
                     var positions = [];
                     positions.push(
                         nodeObjects[ i ].position.x,
@@ -234,9 +258,7 @@
                     // line.computeLineDistances();
                     // line.scale.set( 1, 1, 1 );
                     group.add( line );
-                } );
-                scene.add( group );
-                delete this.bnOption.allDATA['edgeDATA'];
+                });
             },
             loadnifti: function(){
                 var surfObject = this.scene.getObjectByName('surface');

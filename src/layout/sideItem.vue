@@ -34,7 +34,6 @@
 <script>
 export default {
     name: 'menuItem',
-    // components: { bnViewer },
     props: {
         json: Array
     },
@@ -43,8 +42,6 @@ export default {
             if (route.meta && route.meta.title) {
                 return route.meta.title
             } else {
-                // return translation(route.name, 'routes')
-                // return route.name
                 return this.$t('routes.' + route.name)
             }
         }

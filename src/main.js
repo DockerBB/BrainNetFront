@@ -2,6 +2,7 @@ import Vue from 'vue'
 import App from '@/App'
 import router from '@/router'
 import store from '@/store'
+import axios from '@/axios'
 // 第三方
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
@@ -16,7 +17,7 @@ import '@/utils/errorLog'
 import components from '@/components'
 import filters from '@/filters'
 // mock数据
-import '@/mock'
+// import '@/mock'
 
 Vue.config.productionTip = false
 
@@ -35,9 +36,11 @@ Object.keys(filters).forEach(key => {
     Vue.filter(key, filters[key])
 })
 
+Vue.prototype.$axios = axios
 new Vue({
     i18n,
     router,
     store,
+    axios,
     render: h => h(App)
 }).$mount('#app')

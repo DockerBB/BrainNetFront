@@ -1,6 +1,5 @@
 <template>
     <div id="heatmap">
-        <svg id="heatmap-svg"></svg>
     </div>
 </template>
 
@@ -10,14 +9,14 @@
     export default {
         name: "heatmap",
         props: {
-            heatmapData: Object
+            heatmapData: Object,
+            size: Number
         },
         mounted() {
             // this.draw()
         },
         watch: {
             'heatmapData': function () {
-                document.getElementById('heatmap-svg').innerHTML='';
                 this.draw();
             }
         },
@@ -42,7 +41,8 @@
                     colorScale = d3.scaleLinear().domain([minV, maxV]).range([0, 1]);
 
 //(3) 绘制SVG
-                var svg = d3.select("#heatmap-svg")
+                var svg = d3.select("#heatmap").append("svg")
+                    .attr("id", "heatmap-svg")
                     .attr("width", w+100)
                     .attr("height", h);
 
@@ -64,6 +64,9 @@
                     .enter().append("path")
                     .style("stroke-opacity",0.67)
                     .style("stroke","#fff")
+                    .attr('title',function (cell) {
+                        
+                    })
                     .attr('d',function (cell) {
                         return 'M '+ x(cell[1]) + ' ' + y(cell[0]) + ' ' +
                             'L '+ x(cell[1] + 1) + ' ' + y(cell[0]) + ' ' +
@@ -113,24 +116,26 @@
                     .text(function(){
                         return maxV;
                     });
-                // var svgData = document.getElementById('heatmap-svg').outerHTML;
-                // var svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
-                // var svgUrl = URL.createObjectURL(svgBlob);
-                // window.open(svgUrl);
-                this.saveSvg(document.getElementById('heatmap-svg'), 'heatmap');
+                this.transformSvg(document.getElementById('heatmap-svg'));
             },
-            saveSvg: function (svgEl, name) {
-                svgEl.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-                var svgData = svgEl.outerHTML;
+            transformSvg: function (svgEl) {
+                var svgString = new XMLSerializer().serializeToString(svgEl);
                 var preface = '<?xml version="1.0" standalone="no"?>\r\n';
-                var svgBlob = new Blob([preface, svgData], {type:"image/svg+xml;charset=utf-8"});
-                var svgUrl = URL.createObjectURL(svgBlob);
-                var downloadLink = document.createElement("a");
-                downloadLink.href = svgUrl;
-                downloadLink.download = name;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
+                var svg = new Blob([preface, svgString], {type: "image/svg+xml;charset=utf-8"});
+                var canvas = document.createElement("canvas");
+                canvas.width = 600;
+                canvas.height = 500;
+                var ctx = canvas.getContext("2d");
+                var img = new Image();
+                var url = URL.createObjectURL(svg);
+                const size = this.size;
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    var png = canvas.toDataURL("image/png");
+                    document.getElementById('heatmap').innerHTML = '<img src="'+png+'" width="'+(size*1.20)+'" height="'+size+'"/>';
+                    URL.revokeObjectURL(png);
+                };
+                img.src = url;
             }
         }
     }

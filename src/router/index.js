@@ -8,7 +8,6 @@ const home = () => import('@/page/index/children/home/home')
 const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
 const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
 const gretna = () => import('@/page/index/children/gretna/gretna')
-const networkViewer = () => import('@/page/index/children/networkViewer/networkViewer')
 // login
 const login = () => import('@/page/login/login')
 // other
@@ -46,14 +45,6 @@ export const sideRoutes = [
         }
     },
     {
-        name: 'networkviewer',
-        path: 'networkViewer',
-        component: networkViewer,
-        meta: {
-            icon: 'el-icon-share'
-        }
-    },
-    {
         name: 'bn-view',
         path: 'brainNet',
         components: {
@@ -81,7 +72,6 @@ export default new Router({
             component: index,
             redirect: '/index/home',
             meta: {
-                title: '首页',
                 login: true
             },
             children: sideRoutes

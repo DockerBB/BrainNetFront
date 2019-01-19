@@ -1,6 +1,5 @@
 <template>
     <div id="chord">
-        <svg id="chord-svg"></svg>
     </div>
 </template>
 
@@ -11,14 +10,18 @@
         name: "chord",
         props: {
             chordData: Object,
-            radius: Number
+            size: Number
         },
         mounted() {
         },
         watch: {
             'chordData': function () {
-                document.getElementById('chord-svg').innerHTML='';
                 this.draw();
+            }
+        },
+        data() {
+            return {
+                chordsize: 1000
             }
         },
         methods: {
@@ -26,13 +29,15 @@
                 let labelList = this.chordData.label;
                 let matrix = this.chordData.matrix;
                 // var svg = d3.select(this.$el), // 获取svg元素
-                var svg = d3.select("#chord-svg")
-                        .attr("width",1000)
-                        .attr("height",1000), // 获取svg元素
+                this.chordsize = matrix.length < 100 ? 1000 : matrix.length * 16;
+                var svg = d3.select("#chord").append('svg')
+                        .attr("id","chord-svg")
+                        .attr("width",this.chordsize)
+                        .attr("height",this.chordsize), // 获取svg元素
                     width = +svg.attr("width"), // 获取svg元素的宽度
                     height = +svg.attr("height"), //   获取svg元素的高度
                     // 计算外半径尺寸，这里取svg画布的宽、高的最小值的一半，减去40，表示两边留有余地；
-                    outerRadius = Math.min(width, height) * 0.5 - 100,
+                    outerRadius = Math.min(width, height) * 0.5 - 120,
                     // 计算内半径尺寸
                     innerRadius = outerRadius - 30;
 
@@ -104,23 +109,29 @@
                     .attr("d", ribbon)
                     // 弦的填充色是目标点的索引值确定的
                     .style("fill", function(d) { return color(d.target.index); })
-                    .style("fill-opacity", 0.33)
+                    .style("fill-opacity", 0.0)
                     .style("stroke", function(d) { return d3.rgb(color(d.target.index)).darker(); })
                     .style("stroke-opacity", 0.67);
-                this.saveSvg(document.getElementById('chord-svg'), 'chord');
+                this.transformSvg(document.getElementById('chord-svg'));
             },
-            saveSvg: function (svgEl, name) {
-                svgEl.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-                var svgData = svgEl.outerHTML;
+            transformSvg: function (svgEl) {
+                var svgString = new XMLSerializer().serializeToString(svgEl);
                 var preface = '<?xml version="1.0" standalone="no"?>\r\n';
-                var svgBlob = new Blob([preface, svgData], {type:"image/svg+xml;charset=utf-8"});
-                var svgUrl = URL.createObjectURL(svgBlob);
-                var downloadLink = document.createElement("a");
-                downloadLink.href = svgUrl;
-                downloadLink.download = name;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
+                var svg = new Blob([preface, svgString], {type: "image/svg+xml;charset=utf-8"});
+                var canvas = document.createElement("canvas");
+                canvas.width = this.chordsize;
+                canvas.height = this.chordsize;
+                var ctx = canvas.getContext("2d");
+                var img = new Image();
+                var url = URL.createObjectURL(svg);
+                const size = this.size;
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    var png = canvas.toDataURL("image/png");
+                    document.getElementById('chord').innerHTML = '<img src="'+png+'" width="'+size+'" height="'+size+'"/>';
+                    URL.revokeObjectURL(png);
+                };
+                img.src = url;
             },
         }
     }

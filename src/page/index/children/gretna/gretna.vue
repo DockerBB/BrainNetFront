@@ -32,33 +32,64 @@
                         <el-button icon="el-icon-arrow-left" @click="removeOption()" circle></el-button>
                     </div>
                 </div>
+                <el-table :data="fileList" style="width: 100%" type="selection">
+                    <el-table-column type="selection" width="55" ></el-table-column>
+                    <el-table-column
+                            label="file"
+                            prop="name">
+                    </el-table-column>
+                    <el-table-column align="right">
+                        <template slot="header" slot-scope="scope">
+                            <el-input
+                                    v-model="search"
+                                    size="mini"
+                                    placeholder="输入关键字搜索"/>
+                        </template>
+                        <template slot-scope="scope">
+                            <el-button
+                                    size="mini"
+                                    type="danger"
+                                    @click="handleDelete(scope.$index)">Delete</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-upload
+                        class="upload matrix file"
+                        action="http://47.107.40.143:8080/uploadsinglefile"
+                        :with-credentials='true'
+                        :on-preview="handlePreview"
+                        :auto-upload="true"
+                        :show-file-list="false"
+                        multiple
+                        :limit="5"
+                        :file-list="fileList">
+                    <el-button slot="trigger" size="small" type="primary" round>{{ translations('importMatrix') }}</el-button>
+                    <div slot="tip" class="el-upload__tip">{{ translations('uploadtip') }}</div>
+                </el-upload>
                 <el-form :inline="true" :model="NetworkConfiguration" :hidden="NetworkCard.optionCount < 1">
-                    <el-form-item label="Brain Connectivity Matrix">
-                        <el-button style="width: 100%" @click="setfilelist()">{{ selectLabel == null ? '请选择矩阵文件':selectLabel }}</el-button>
-                    </el-form-item>
                     <p class="item text"> . Sign of Matrix</p>
                     <el-form-item label=" . . Sign:  ">
                         <el-select v-model="NetworkConfiguration.signType">
-                            <el-option label="Postive" value="POSTIVE"></el-option>
-                            <el-option label="Nagtive" value="NAGTIVE"></el-option>
-                            <el-option label="Absolute" value="ABSOLUTE"></el-option>
+                            <el-option label="Postive" :value="1"></el-option>
+                            <el-option label="Nagtive" :value="2"></el-option>
+                            <el-option label="Absolute" :value="3"></el-option>
                         </el-select>
                     </el-form-item>
                     <p class="item text"> . Thresholding Method</p>
                     <el-form-item label=" . . Method:  ">
                         <el-select v-model="NetworkConfiguration.thresMethod">
-                            <el-option label="Network Sparsity" value="NETWORKSPARSITY"></el-option>
-                            <el-option label="Value of Matrix Elemnt" value="MATRIXELEMENT"></el-option>
+                            <el-option label="Network Sparsity" :value="1"></el-option>
+                            <el-option label="Value of Matrix Elemnt" :value="2"></el-option>
                         </el-select>
                     </el-form-item>
                     <el-form-item label=" . . Threshold Sequence:  ">
-                        <el-input :value="NetworkConfiguration.thresSequence"></el-input>
+                        <el-input :value="NetworkConfiguration.thresSequence.toString()"></el-input>
                     </el-form-item>
                     <p class="item text"> . Network Type</p>
                     <el-form-item label=" . . Type:  ">
                         <el-select v-model="NetworkConfiguration.netType">
-                            <el-option label="Binary" value="BINARY"></el-option>
-                            <el-option label="Weighted" value="WEIGHTED"></el-option>
+                            <el-option label="Binary" :value="1"></el-option>
+                            <el-option label="Weighted" :value="2"></el-option>
                         </el-select>
                     </el-form-item>
 
@@ -76,6 +107,18 @@
                         <p class="item text">{{ NodalandModularNetworkMetrics.title }}</p>
                         <div v-for="(value,key) in NodalandModularNetworkMetrics.item" :key="key" class="text item">
                             <el-radio v-model="NodalandModularNetworkMetrics.selected" :label="key" :hidden="!NodalandModularNetworkMetrics.showable[key]">{{ value }}</el-radio>
+                            <div v-if="NodalandModularNetworkMetrics.item[key] === 'Nodal - Community Index'" :label="key" style="margin-left: 20px" :hidden="!NodalandModularNetworkMetrics.showable[key]">
+                                <p class="item text"> . . Modularity Algorithm:</p>
+                                <el-select v-model="NetworkConfiguration.modulAlgor">
+                                    <el-option label="Modified Greedy Optimization" :value="1"></el-option>
+                                    <el-option label="Spectral Optimization" :value="2"></el-option>
+                                </el-select>
+                                <p class="item text"> . . Estimating Participant Coefficient:</p>
+                                <el-select v-model="NetworkConfiguration.dDPcFlag">
+                                    <el-option label="TRUE" :value="1"></el-option>
+                                    <el-option label="FALSE" :value="2"></el-option>
+                                </el-select>
+                            </div>
                         </div>
                     </div>
                     <el-row type="flex" justify="end">
@@ -84,27 +127,31 @@
                 </el-form>
             </el-card>
         </el-row>
-        <el-dialog title="Brain Connectivity Matrix" :visible.sync="dialogTableVisible">
-            <el-tree
-                    :data="dialogData"
-                    node-key="id"
-                    :expand-on-click-node="true">
-                <span class="custom-tree-node" slot-scope="{ node, data }">
-                    <span v-if="data.children === undefined" @click="() => getRealNetURI(node)"><img src="@/assets/img/wendang.png" height="16" width="16"/>{{ node.label }}</span>
-                    <span v-else><img src="@/assets/img/wenjianjia.png" height="16" width="16"/>{{ node.label }}</span>
-                </span>
-            </el-tree>
-            <span slot="footer" class="dialog-footer">
-                <el-button @click="dialogTableVisible = false">取 消</el-button>
-            </span>
+        <el-dialog :title="translations('displayDiagTitle')" :visible.sync="dialogTableVisible">
+            <el-checkbox-group v-model="checkboxGroup" @change="()=>console.log('checkboxGroup')">
+                <el-checkbox-button label="Chord Graph"></el-checkbox-button>
+                <el-checkbox-button label="Heat Map Graph"></el-checkbox-button>
+            </el-checkbox-group>
+            <div :hidden="checkboxGroup.indexOf('Chord Graph') === -1">
+                <chord :chord-data="chordData" :size="500"></chord>
+            </div>
+            <div :hidden="checkboxGroup.indexOf('Heat Map Graph') === -1">
+                <heatmap :heatmap-data="heatmapData" :size="500"></heatmap>
+            </div>
         </el-dialog>
     </div>
 </template>
 <script>
     /* eslint-disable */
     import { request } from '@/utils/request'
+    import { EdgeLoader } from '@/utils/EdgeLoader'
+    import i18nLang from './i18n-lang'
+    import Chord from './chord'
+    import Heatmap from './heatmap'
+    const keyName = 'netAnalysis'
     export default {
         name: 'gretna',
+        components: { Heatmap, Chord },
         data() {
             return {
                 background: {
@@ -112,9 +159,15 @@
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat"
                 },
+                dialogTitle: 'display matrx',
                 dialogTableVisible: false,
-                dialogData: null,
-                selectLabel: null,
+                runDialogTableVisible: false,
+                chordData: null,
+                heatmapData: null,
+                checkboxGroup: [],
+                fileListGroup:[],
+                isIndeterminate: false,
+                checkAll: false,
                 NetworkCard:{
                     title: 'Network Configuration',
                     optionCount: 0,
@@ -123,12 +176,16 @@
                     selected: 0,
                 },
                 NetworkConfiguration: {
-                    signType:'POSTIVE',
-                    thresMethod:'NETWORKSPARSITY',
+                    signType:1,
+                    thresMethod:1,
                     thresSequence:[0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.3,0.45,0.5],
-                    netType:'BINARY',
+                    netType:1,
                     randNetworkNum: 100,
+                    clustAlgor: 1,
+                    modulAlgor: 1,
+                    dDPcFlag: 1,
                     toDoList:[],
+                    fileListGroup: [],
                     realNetURI: null
                 },
                 GlobalNetworkMetrics: {
@@ -140,16 +197,20 @@
                 NodalandModularNetworkMetrics: {
                     title: 'Nodal and Modular Network Metrics',
                     selected: 0,
-                    showable: [false,false,false,false,false,false,false,false],
-                    item: ['Nodal - Shortest Path Length','Nodal - Efficiency','Nodal - Local Efficiency','Nodal - Degree Centrality','Nodal - Betweenness Centrality','Nodal - Community Index','Nodal - Participant Coefficient','Modular - Interaction']
-                }
+                    showable: [false,false,false,false,false,false,false,false,false],
+                    item: ['Nodal - Clustering Coefficient','Nodal - Shortest Path Length','Nodal - Efficiency','Nodal - Local Efficiency','Nodal - Degree Centrality','Nodal - Betweenness Centrality','Nodal - Community Index','Nodal - Participant Coefficient','Modular - Interaction']
+                },
+                fileList: [{name: 'Edge_AAL90_Binary.edge', url: 'http://www.aknifezndx.top:8080/public/AAL90/Edge_AAL90_Binary.edge'}, {name: 'Edge_Fair34_Binary.edge', url: 'http://www.aknifezndx.top:8080/public/Fair34/Edge_Fair34_Binary.edge'}]
             }
         },
-
+        created() {
+            this.initLocal();
+        },
         mounted() {
         },
         methods: {
             inputOption: function (card) {
+                if (card.selected >= card.item.length) return;
                 card.showable[card.selected] = true;
                 for(card.selected = 0;card.showable[card.selected];card.selected++);
                 this.updateOptionCount();
@@ -159,11 +220,11 @@
                 let n = this.NodalandModularNetworkMetrics;
                 if (g.showable[g.selected]) {
                     g.showable[g.selected] = false;
-                    for(g.selected = 0;g.showable[g.selected] == false;g.selected++);
+                    for(g.selected = 0;g.showable[g.selected] === false;g.selected++);
                 }
                 if (n.showable[n.selected]) {
                     n.showable[n.selected] = false;
-                    for(n.selected = 0;n.showable[n.selected] == false;n.selected++);
+                    for(n.selected = 0;n.showable[n.selected] === false;n.selected++);
                 }
                 this.updateOptionCount();
             },
@@ -185,15 +246,6 @@
                     type: 'warning'
                 });
             },
-            setfilelist: function () {
-                this.dialogData = [];
-                this.NetworkConfiguration.realNetURI = null;
-                this.selectLabel = null;
-                request('/getfilelist','POST',[]).then(data => {
-                    this.dialogData = data.data;
-                });
-                this.dialogTableVisible = true;
-            },
             getRealNetURI: function(node) {
                 let url = node.label;
                 this.selectLabel = node.label;
@@ -203,6 +255,43 @@
                 }
                 this.NetworkConfiguration.realNetURI = url;
                 this.dialogTableVisible = false;
+            },
+            handlePreview(file) {
+                const self = this;
+                let roiLabel;
+                request('http://brainSci.tools/aal90label', 'GET').then(res => {
+                    roiLabel = res.data.label;
+                    return request(file.url, 'get')
+                }).then(data => {
+                    if (data){
+                        self.chordData = {
+                            matrix: new EdgeLoader().loadMatrix(data),
+                            label: roiLabel
+                        };
+                        self.heatmapData = {
+                            data: new EdgeLoader().loadAList(data),
+                            label: roiLabel
+                        };
+                    }
+                })
+                this.dialogTableVisible = true;
+            },
+            handleDelete(index) {
+                this.$confirm(`确定从服务器移除文件 ${ this.fileList[index].name }？`).then(() =>{
+                    let li = this.fileList;
+                    let len = this.fileList.length - 1;
+                    this.fileList = [];
+                    li.filter((v,i) => i !== index).forEach(v => this.fileList.push(v))
+                }).catch(() => {});
+            },
+            initLocal() {
+                if (!this.$te(keyName)) {
+                    this.$i18n.mergeLocaleMessage('zh', i18nLang.zh)
+                    this.$i18n.mergeLocaleMessage('en', i18nLang.en)
+                }
+            },
+            translations(key){
+                return this.$t(keyName + '.' + key)
             }
         }
     }

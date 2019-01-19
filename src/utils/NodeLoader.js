@@ -41,7 +41,7 @@ Object.assign( NodeLoader.prototype ,{
 
       // float float float int float string
 
-      pattern = /([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\d]+\.?[\d|\-|e]*)[\s]+([\d]+\.?[\d|\-|e]*)[\s]+([\w|\.|-]+)[\s]+/g;
+      pattern = /([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\+|\-]?[\d]+\.?[\d|\-|e]*)[\s]+([\d]+\.?[\d|\-|e]*)[\s]+([\d]+\.?[\d|\-|e]*)[\s]+([\w|\.|\-]+)/g;
 
       /**
        * 相比Geometry，BufferGeometry 会缓存网格模型，性能要高效点。网格模型生成原理
@@ -56,20 +56,36 @@ Object.assign( NodeLoader.prototype ,{
        */
       var sphereMaterial = new MeshBasicMaterial({ color: 0x3a8ee6 });
       var shpereGeometry = new SphereBufferGeometry();
-      while ( ( result = pattern.exec( data ) ) != null ) {
+      data.split(/\n/g).forEach(function(row){
+          if ( ( result = pattern.exec( row ) ) !== null ) {
+              // ["-38.65	-5.68	50.94	4	4.96	PreCG.L", "x", "y", "z", "color", "size", "Label"]new THREE.SphereGeometry(radius)
 
-          // ["-38.65	-5.68	50.94	4	4.96	PreCG.L", "x", "y", "z", "color", "size", "Label"]new THREE.SphereGeometry(radius)
-
-          var mesh = new Mesh(
-              shpereGeometry.clone(),
-              sphereMaterial.clone()
-          );
-          mesh.position.set( parseFloat( result[ 1 ] ), parseFloat( result[ 2 ] ), parseFloat( result[ 3 ] ) );
-          mesh.name = result[ 6 ];
-          Object.push( mesh );
-          ObjectRadius.push( parseFloat( result[ 5 ] ) );
-          ObjectColorId.push( parseInt( result[ 4 ] ) );
-      }
+              var mesh = new Mesh(
+                  shpereGeometry.clone(),
+                  sphereMaterial.clone()
+              );
+              mesh.position.set( parseFloat( result[ 1 ] ), parseFloat( result[ 2 ] ), parseFloat( result[ 3 ] ) );
+              mesh.name = result[ 6 ];
+              Object.push( mesh );
+              ObjectRadius.push( parseFloat( result[ 5 ] ) );
+              ObjectColorId.push( parseInt( result[ 4 ] ) );
+          }
+          pattern.lastIndex = 0; //为了反复使用RegExpObject.exec(string)方法
+      });
+      // while ( ( result = pattern.exec( data ) ) != null ) {
+      //
+      //     // ["-38.65	-5.68	50.94	4	4.96	PreCG.L", "x", "y", "z", "color", "size", "Label"]new THREE.SphereGeometry(radius)
+      //
+      //     var mesh = new Mesh(
+      //         shpereGeometry.clone(),
+      //         sphereMaterial.clone()
+      //     );
+      //     mesh.position.set( parseFloat( result[ 1 ] ), parseFloat( result[ 2 ] ), parseFloat( result[ 3 ] ) );
+      //     mesh.name = result[ 6 ];
+      //     Object.push( mesh );
+      //     ObjectRadius.push( parseFloat( result[ 5 ] ) );
+      //     ObjectColorId.push( parseInt( result[ 4 ] ) );
+      // }
       onLoad( Object, ObjectRadius, ObjectColorId );
   }
 

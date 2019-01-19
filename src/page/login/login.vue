@@ -1,16 +1,16 @@
 <template>
     <div id="login" :style="background">
-        <div class="login-wrapper">
+        <div class="login-wrapper" style="background: #ffffff;border-style: solid; border-radius: 5px; border-width: 2px">
             <div class="title">Brain Science Lab</div>
             <el-form class="login-form" :model="form" @submit.native.prevent="verify">
                 <el-form-item>
                     <!-- username -->
-                    <el-input v-model="form.username" placeholder="用户名" auto-complete='off' />
+                    <el-input v-model="form.username" placeholder="账号" auto-complete='off' />
                     <span class="input-icon prepend-icon">
                         <i class="el-icon-my-user"></i>
                     </span>
                 </el-form-item>
-                <el-form-item>
+                <el-form-item :hidden="form.username === 'public'">
                     <!-- password -->
                     <el-input v-model="form.password" placeholder="密码" auto-complete='off' :type="pwdWatch ? 'text' : 'password'" />
                     <span class="input-icon prepend-icon">
@@ -21,13 +21,17 @@
                     </span>
                 </el-form-item>
                 <!-- submit -->
-                <el-input class="login_btn" type="submit" value="登录" />
+                <el-input v-if="form.username === 'public'" class="login_btn" type="submit" :value="transform('playground')" />
+                <div v-else align="end"><el-button native-type="submit" round>{{ transform('login') }}</el-button><el-button @click="signon" type="primary" round>{{ transform('signon') }}</el-button></div>
             </el-form>
         </div>
 
     </div>
 </template>
 <script>
+/* eslint-disable */
+import cache from "../../utils/cache";
+
 export default {
     name: 'login',
     data() {
@@ -39,14 +43,20 @@ export default {
                 opacity: 0.7
             },
             form: {
-                username: 'uncleLian',
-                password: '123456'
+                username: 'public',
+                password: ''
             },
             pwdWatch: false
         }
     },
     methods: {
         verify() {
+            if (this.form.username === 'public'){
+                this.$message.info('you are not login yet')
+                this.$store.state.user =
+                this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
+                return;
+            }
             if (!this.form.username) {
                 this.$message.error('请输入账号')
             } else if (!this.form.password) {
@@ -56,13 +66,57 @@ export default {
             }
         },
         login() {
-            this.$store.dispatch('GET_LOGIN_DATA', this.form).then((res) => {
+            this.$axios.post('/login-test', this.form, {
+                headers: {
+                    'Content-type': 'application/json;charset=UTF-8'
+                }
+            }).then((res) => {
+                this.$store.commit('SET_USER', {
+                    nickname: res.data.data.name,
+                    headimgurl: res.data.data.avatar
+                })
+                cache.setToken(res.token)
                 this.$message.success('登录成功')
                 this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
             }).catch((err) => {
                 console.log(err)
-                this.$message.error('账号密码错误')
+                this.$message.error('账号或密码错误')
             })
+        },
+        signon() {
+            this.$prompt('请输入用户名', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                inputPattern: /[\w!#$%&'*+/=?^_`{|}~-\u4e00-\u9fa5]*/,
+                inputErrorMessage: '无效用户名'
+            }).then(({ value }) => {
+                this.form.name = value
+                this.$axios.post('/signon', this.form, {
+                    headers: {
+                        'Content-type': 'application/json;charset=UTF-8'
+                    }
+                }).then((res) => {
+                    console.log(res.data)
+                    this.$store.state.user = {
+                        nickname: res.data.data.name,
+                        avatar: res.data.data.avatarUrl
+                    }
+                    cache.setToken(res.token)
+                    this.$message.success('注册成功')
+                    this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
+                }).catch((err) => {
+                    console.log(err)
+                    this.$message.error('注册失败')
+                })
+            }).catch(() =>
+                this.$message({
+                    type: 'info',
+                    message: '注册已取消'
+                })
+            )
+        },
+        transform(key) {
+            return this.$t('login.' + key)
         }
     }
 }

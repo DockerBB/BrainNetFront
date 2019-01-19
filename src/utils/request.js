@@ -4,9 +4,9 @@ import cache from '@/utils/cache'
 
 export const instance = axios.create({
     baseURL: 'http:' + window.g.API_URL,
-    timeout: 20 * 1000
+    timeout: 20 * 1000,
+    withCredentials: true
 })
-
 // request
 instance.interceptors.request.use(config => {
     if (cache.getToken()) {

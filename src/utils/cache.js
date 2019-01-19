@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie'
 
-const TokenKey = 'vue-bolg-template-token'
+const TokenKey = 'brainSci-tools-token'
 
 export default {
     getToken: function() {

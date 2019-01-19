@@ -1,17 +1,18 @@
 export default {
     translations: 'Translations',
-    logOut: 'logOut',
+    logOut: 'Sgin Out',
     routes: {
-        index: 'Index',
+        index: 'BrainSci Tools',
         home: 'Home',
         documents: 'Documents',
         'bn-view': 'BrainNet Viewer',
-        networkviewer: 'Network Viewer',
         gretna: 'Network Analysis',
         permission: 'Permission'
     },
     login: {
+        playground: 'Go to Play Ground',
         login: 'Login',
+        signon: 'Sign on',
         username: 'username',
         password: 'password',
         weChat: 'weChat',
