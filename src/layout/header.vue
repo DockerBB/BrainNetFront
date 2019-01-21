@@ -72,8 +72,11 @@ export default {
         },
         onUserSelected(val) {
             if (val === 'exit') {
-                this.$store.commit('SET_LOGOUT')
-                this.$router.push('/login')
+                this.$axios.post('/signout').then(res => {
+                    this.$message.success(res.data.message)
+                    this.$store.commit('SET_LOGOUT')
+                    this.$router.push('/login')
+                })
             }
         },
         getBreadcrumb() {

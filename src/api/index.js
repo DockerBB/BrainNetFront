@@ -2,7 +2,14 @@ import { request } from '@/utils/request'
 
 // 登录
 export function getLogin(form) {
-    let res = request(window.g.BASE_URL + 'login', 'POST', form)
+    let res
+    if (form.username !== 'public') res = request('/login-test', 'POST', form)
+    else res = request('http://blog.liansixin.win/login', 'POST', form)
+    return res
+}
+// 注册
+export function signOn(form) {
+    let res = request('/signon', 'POST', form)
     return res
 }
 // 用户信息

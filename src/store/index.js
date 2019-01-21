@@ -10,7 +10,7 @@ const state = {
     logs: [], // 错误日志
     user: '', // 用户信息{headimgurl,nickname}
     language: 'en',
-    bnOption: { flag: false, allMaterial: {} }
+    bnOption: { sflag: false, lflag: false, allMaterial: {} }
 }
 const getters = {
 }
@@ -24,6 +24,7 @@ const mutations = {
     },
     SET_USER(state, val) {
         state.user = val
+        cache.setLocal('user', val)
     },
     SET_ROLE(state, val) {
         state.user.role = val
@@ -57,7 +58,6 @@ const actions = {
     async GET_USER_DATA({ commit }, token) {
         return new Promise((resolve, reject) => {
             getUser(token).then(res => {
-                // console.log('user', res)
                 if (res && res.code === 200 && res.data) {
                     commit('SET_USER', res.data)
                     resolve(res.data)

@@ -52,14 +52,17 @@
                 <div v-if="bnOption.allMaterial.lineMaterial" style="text-align: right; margin: 0">
                     <el-form v-if="bnOption.allMaterial.lineMaterial" :label-position="'left'" label-width="200px" :model="bnOption.allMaterial.lineMaterial">
                         <el-form-item label="Connection Weight Range">
-                            <el-slider v-model="lineWidth" :min="bnOption.allMaterial.lineMaterial.minWeight" :max="bnOption.allMaterial.lineMaterial.maxWeight" :range="true" :step="bnOption.allMaterial.lineMaterial.step" show-stops></el-slider>
-                            <el-button @click="() => bnOption.allMaterial.lineMaterial.lineWidth = lineWidth">Use Range</el-button>
+                            <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :min="bnOption.allMaterial.lineMaterial.minWeight" :max="bnOption.allMaterial.lineMaterial.maxWeight" :range="true" :step="bnOption.allMaterial.lineMaterial.step" show-stops></el-slider>
                         </el-form-item>
-                        <el-form-item label="Connection Opacity">
-                            <el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>
+                        <el-button @click="() => bnOption.lflag = true">Set Range</el-button>
+                        <!--<el-form-item label="Connection Opacity">-->
+                            <!--<el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>-->
+                        <!--</el-form-item>-->
+                        <el-form-item label="Connection Size">
+                            <el-input-number v-model="bnOption.allMaterial.lineMaterial.size" @change="() => bnOption.lflag = true" :min="1" :max="10"></el-input-number>
                         </el-form-item>
                         <el-form-item label="Connection Color">
-                            <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color"></el-color-picker>
+                            <el-color-picker v-model="bnOption.allMaterial.lineMaterial.color" @change="()=> bnOption.lflag = true"></el-color-picker>
                         </el-form-item>
                     </el-form>
                 </div>
@@ -98,7 +101,7 @@
 <script>
     /* eslint-disable */
     import { NIFTILoader } from '@/utils/NIFTILoader'
-    import { request } from '@/utils/request'
+    import { surfIndex, nodeIndex, edgeIndex, niftiIndex } from '../data-index'
     import i18nLang from './i18n-lang'
     const keyName = 'brainViewer'
     export default {
@@ -130,7 +133,6 @@
           nodeLabel: null,
           edgeLabel: null,
           niftiLabel: null,
-          lineWidth: [0, 1],
           bnOption: this.$store.state.bnOption
       }
     },
@@ -145,12 +147,7 @@
           console.log(canvas.toDataURL());
         },
         downloadData: function(node) {
-          var url = node.label;
-          this[ this.fileType + 'Label' ] = node.label;
-          while(node.parent.label){
-              url = node.parent.label + '/' + url;
-              node = node.parent
-          }
+          let url = node.data.uri;
           const self = this;
           if (this.fileType === 'nifti') fetch('http:' + window.g.API_URL + '/' + url, {
               headers: {
@@ -158,19 +155,19 @@
                   'content-type': 'application/octet-stream'
               },
               method: 'GET'
-          }).then(data => {
+          }).then(data => data.arrayBuffer()).then(data => {
               if (data) {
                   delete self.bnOption.NIFTIModel;
                   var loader = self.bnOption.NIFTIModel = new NIFTILoader();
-                  loader.load(data.arrayBuffer());
-                  self.bnOption.flag = true;
+                  loader.load(data);
+                  self.bnOption.sflag = true;
               }
           })
           else this.$axios.get(url).then(data => {
               if (data){
                   delete self.bnOption.allDATA[ self.fileType + 'DATA' ];
                   self.bnOption.allDATA[ self.fileType + 'DATA' ] = data.data;
-                  self.bnOption.flag = true;
+                  self.bnOption.sflag = true;
               }
           });
           this.dialogTableVisible = false;
@@ -186,7 +183,7 @@
                   delete self.bnOption.allDATA[ self.fileType + 'DATA' ];
                   var text = reader.result;
                   self.bnOption.allDATA[ self.fileType + 'DATA' ] = text;
-                  self.bnOption.flag = true;
+                  self.bnOption.sflag = true;
               };
               reader.readAsText(file);
               self[ self.fileType + 'Label' ] = file.name;
@@ -208,7 +205,7 @@
                   reader.onload = function (e) {
                       var buffer = reader.result;
                       loader.load(buffer);
-                      self.bnOption.flag = true;
+                      self.bnOption.sflag = true;
                   };
                   reader.readAsArrayBuffer(file);
                   self.niftiLabel = file.name;
@@ -219,10 +216,10 @@
           this.dialogTableVisible = false;
         },
         setfilelist: function (resForDialog) {
-            this.dialogData = [];
-            this.$axios.post('/getfilelist',resForDialog.acceptType).then(res => {
-              this.dialogData = res.data.data;
-            });
+            if (resForDialog.fileType === 'surf') this.dialogData = surfIndex;
+            if (resForDialog.fileType === 'node') this.dialogData = nodeIndex;
+            if (resForDialog.fileType === 'edge') this.dialogData = edgeIndex;
+            if (resForDialog.fileType === 'nifti') this.dialogData = niftiIndex;
             this.dialogTitle = this.translations(resForDialog.fileType + 'Label');
             this.fileType = resForDialog.fileType;
             this.dialogTableVisible = true;
@@ -241,7 +238,7 @@
         this.initLocal();
     },
     mounted() {
-        this.bnOption.flag = false;
+        this.bnOption.sflag = false;
         this.bnOption.allDATA = {};
         this.bnOption.allMaterial = {
           surfMaterial: {
@@ -251,11 +248,12 @@
           },
           lineMaterial: {
               color: '#ffffe0',
-              opacity: 1,
+              // opacity: 1,
               lineWidth: [0,1],
               step:1,
               minWeight:0,
-              maxWeight:10
+              maxWeight:10,
+              size: 1
           }
         }
         this.bnOption.NIFTIModel = null;

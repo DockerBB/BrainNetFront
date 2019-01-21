@@ -1,6 +1,5 @@
 <template>
     <div id="home" :style="background">
-        <p>{{ content }}</p>
     </div>
 </template>
 <script>
@@ -15,12 +14,10 @@
                     backgroundImage: "url(" + require("@/assets/img/background.jpg") + ")",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat"
-                },
-                content: null
+                }
             }
         },
         mounted() {
-            this.$axios.get('/public/BrainMesh_Ch2withCerebellum.nv').then(res => this.content = res.data.data)
         },
         methods: {
             getURI: function(node) {

@@ -32,20 +32,17 @@
                         <el-button icon="el-icon-arrow-left" @click="removeOption()" circle></el-button>
                     </div>
                 </div>
-                <el-table :data="fileList" style="width: 100%" type="selection">
+                <el-table :data="fileList" style="width: 100%" type="selection" @selection-change="handleSelectionChange">
                     <el-table-column type="selection" width="55" ></el-table-column>
                     <el-table-column
                             label="file"
                             prop="name">
                     </el-table-column>
                     <el-table-column align="right">
-                        <template slot="header" slot-scope="scope">
-                            <el-input
-                                    v-model="search"
-                                    size="mini"
-                                    placeholder="输入关键字搜索"/>
-                        </template>
                         <template slot-scope="scope">
+                            <el-button
+                                    size="mini"
+                                    @click="handlePreview(scope.$index)">Preview</el-button>
                             <el-button
                                     size="mini"
                                     type="danger"
@@ -55,9 +52,9 @@
                 </el-table>
                 <el-upload
                         class="upload matrix file"
-                        action="http://47.107.40.143:8080/uploadsinglefile"
+                        :action="uploadtag"
                         :with-credentials='true'
-                        :on-preview="handlePreview"
+                        :on-success="handleSuccess"
                         :auto-upload="true"
                         :show-file-list="false"
                         multiple
@@ -128,7 +125,7 @@
             </el-card>
         </el-row>
         <el-dialog :title="translations('displayDiagTitle')" :visible.sync="dialogTableVisible">
-            <el-checkbox-group v-model="checkboxGroup" @change="()=>console.log('checkboxGroup')">
+            <el-checkbox-group v-model="checkboxGroup">
                 <el-checkbox-button label="Chord Graph"></el-checkbox-button>
                 <el-checkbox-button label="Heat Map Graph"></el-checkbox-button>
             </el-checkbox-group>
@@ -146,9 +143,12 @@
     import { request } from '@/utils/request'
     import { EdgeLoader } from '@/utils/EdgeLoader'
     import i18nLang from './i18n-lang'
+    import { aal90label } from '../data-index'
     import Chord from './chord'
     import Heatmap from './heatmap'
     const keyName = 'netAnalysis'
+    const publicFileList = [{name: 'Edge_AAL90_Binary.edge', uri: '/public/AAL90/Edge_AAL90_Binary.edge', isPubllic: true}, {name: 'Edge_Fair34_Binary.edge', uri: '/public/Fair34/Edge_Fair34_Binary.edge', isPubllic: true}]
+
     export default {
         name: 'gretna',
         components: { Heatmap, Chord },
@@ -165,7 +165,6 @@
                 chordData: null,
                 heatmapData: null,
                 checkboxGroup: [],
-                fileListGroup:[],
                 isIndeterminate: false,
                 checkAll: false,
                 NetworkCard:{
@@ -176,6 +175,8 @@
                     selected: 0,
                 },
                 NetworkConfiguration: {
+                    selPreInd: [],
+                    selPostInd: [],
                     signType:1,
                     thresMethod:1,
                     thresSequence:[0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.3,0.45,0.5],
@@ -184,8 +185,6 @@
                     clustAlgor: 1,
                     modulAlgor: 1,
                     dDPcFlag: 1,
-                    toDoList:[],
-                    fileListGroup: [],
                     realNetURI: null
                 },
                 GlobalNetworkMetrics: {
@@ -200,13 +199,15 @@
                     showable: [false,false,false,false,false,false,false,false,false],
                     item: ['Nodal - Clustering Coefficient','Nodal - Shortest Path Length','Nodal - Efficiency','Nodal - Local Efficiency','Nodal - Degree Centrality','Nodal - Betweenness Centrality','Nodal - Community Index','Nodal - Participant Coefficient','Modular - Interaction']
                 },
-                fileList: [{name: 'Edge_AAL90_Binary.edge', url: 'http://www.aknifezndx.top:8080/public/AAL90/Edge_AAL90_Binary.edge'}, {name: 'Edge_Fair34_Binary.edge', url: 'http://www.aknifezndx.top:8080/public/Fair34/Edge_Fair34_Binary.edge'}]
+                fileList: [],
+                uploadtag: 'http:' + window.g.API_URL + '/uploadsinglefile'
             }
         },
         created() {
             this.initLocal();
         },
         mounted() {
+            this.handleSuccess();
         },
         methods: {
             inputOption: function (card) {
@@ -236,52 +237,62 @@
             onSubmit:function () {
                 let g = this.GlobalNetworkMetrics;
                 let n = this.NodalandModularNetworkMetrics;
-                this.NetworkConfiguration.toDoList = [];
-                let arr = this.NetworkConfiguration.toDoList;
-                for(let i = 0;i < g.item.length;i++) if (g.showable[i]) arr[arr.length] = g.item[i];
-                for(let i = 0;i < n.item.length;i++) if (n.showable[i]) arr[arr.length] = n.item[i];
-                if (this.NetworkConfiguration.realNetURI != null) request('/gretna', 'POST', this.NetworkConfiguration);
+                this.NetworkConfiguration.selPreInd = [];
+                this.NetworkConfiguration.selPostInd = [];
+                let selG = this.NetworkConfiguration.selPreInd = [];
+                let selN = this.NetworkConfiguration.selPostInd = [];
+                for(let i = 0;i < g.item.length;i++) if (g.showable[i]) selG[selG.length] = i + 1;
+                for(let i = 0;i < n.item.length;i++) if (n.showable[i]) selN[selN.length] = i + 1;
+                if (this.NetworkConfiguration.realNetURI != null) {
+                    this.$axios.post('/gretna', this.NetworkConfiguration);
+                    console.log(this.NetworkConfiguration)
+                }
                 else this.$message({
                     message: '未选择矩阵文件',
                     type: 'warning'
                 });
             },
-            getRealNetURI: function(node) {
-                let url = node.label;
-                this.selectLabel = node.label;
-                while (node.parent.label) {
-                    url = node.parent.label + '/' + url;
-                    node = node.parent
-                }
-                this.NetworkConfiguration.realNetURI = url;
-                this.dialogTableVisible = false;
-            },
-            handlePreview(file) {
+            handlePreview(index) {
                 const self = this;
-                let roiLabel;
-                request('http://brainSci.tools/aal90label', 'GET').then(res => {
-                    roiLabel = res.data.label;
-                    return request(file.url, 'get')
-                }).then(data => {
-                    if (data){
+                let uri = this.fileList[index].uri;
+                this.$axios.get(uri).then(res => {
+                    if (res.data){
+                        let data = res.data
                         self.chordData = {
                             matrix: new EdgeLoader().loadMatrix(data),
-                            label: roiLabel
+                            label: aal90label
                         };
                         self.heatmapData = {
                             data: new EdgeLoader().loadAList(data),
-                            label: roiLabel
+                            label: aal90label
                         };
                     }
                 })
                 this.dialogTableVisible = true;
             },
+            handleSuccess:function(){
+                this.fileList = []
+                this.$axios.get('/getfilelist').then(res => {
+                    res.data.data.forEach(v=>this.fileList.push(v))
+                    if (this.fileList.length === 0) publicFileList.forEach(v=>this.fileList.push(v))
+                }).catch(() => publicFileList.forEach(v=>this.fileList.push(v)))
+            },
+            handleSelectionChange(val) {
+                let uri = [];
+                this.NetworkConfiguration.realNetURI = uri;
+                val.forEach(v=>uri.push(v.uri))
+            },
             handleDelete(index) {
-                this.$confirm(`确定从服务器移除文件 ${ this.fileList[index].name }？`).then(() =>{
+                if (this.fileList[index].isPubllic) {
                     let li = this.fileList;
                     let len = this.fileList.length - 1;
                     this.fileList = [];
                     li.filter((v,i) => i !== index).forEach(v => this.fileList.push(v))
+                }
+                else this.$confirm(`确定从服务器移除文件 ${ this.fileList[index].name }？`).then(() =>{
+                    this.$axios.delete('/MyFile/' + this.fileList[index].name).then(res => {
+                        this.handleSuccess()
+                    }).catch(() => {})
                 }).catch(() => {});
             },
             initLocal() {

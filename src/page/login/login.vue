@@ -52,8 +52,12 @@ export default {
     methods: {
         verify() {
             if (this.form.username === 'public'){
+                this.$store.commit('SET_USER', {
+                    nickname: 'public',
+                    headimgurl: 'https://avatars1.githubusercontent.com/u/25951301?s=40&v=4',
+                    role: 'admin'
+                })
                 this.$message.info('you are not login yet')
-                this.$store.state.user =
                 this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
                 return;
             }
@@ -75,8 +79,8 @@ export default {
                     nickname: res.data.data.name,
                     headimgurl: res.data.data.avatar
                 })
-                cache.setToken(res.token)
-                this.$message.success('登录成功')
+                cache.setToken(res.data.data.token)
+                this.$message.success(res.data.message)
                 this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
             }).catch((err) => {
                 console.log(err)
@@ -102,7 +106,7 @@ export default {
                         avatar: res.data.data.avatarUrl
                     }
                     cache.setToken(res.token)
-                    this.$message.success('注册成功')
+                    this.$message.success(res.data.message)
                     this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
                 }).catch((err) => {
                     console.log(err)

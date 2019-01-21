@@ -6,11 +6,12 @@ import cache from '@/utils/cache'
 router.beforeEach((to, from, next) => {
     // 是否需要登录
     if (to.matched.some(record => record.meta.login)) {
-        if (cache.getToken()) {
+        if (cache.getToken() || store.state.user.nickname === 'public') {
             if (to.path === '/login') {
                 next('/')
             } else {
                 // 是否已有用户信息
+                if (!store.state.user) store.commit('SET_USER', JSON.parse(cache.getLocal('user')))
                 if (store.state.user) {
                     assessPermission(store.state.user.role, to.meta.role, next)
                 } else {
@@ -20,6 +21,7 @@ router.beforeEach((to, from, next) => {
                         console.log(err)
                         // 可根据错误信息，做相应需求，这里默认token值失效
                         window.alert('登录已失效，请重新登录')
+                        cache.removeToken()
                         next({ path: '/login', query: { redirect: to.fullPath } })
                     })
                 }

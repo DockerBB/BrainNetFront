@@ -41,16 +41,19 @@
             }
         },
         watch: {
-            'bnOption.flag': function () {
-                console.log('开始绘制曲面');
-                if (this.bnOption.flag) {
-                    console.log('绘制曲面完成');
-                    if (this.bnOption.allDATA['surfDATA'] != null) this.loadsurf();
-                    if (this.bnOption.allDATA['nodeDATA'] != null) this.loadnode();
-                    if (this.bnOption.allDATA['edgeDATA'] != null) this.loadedge();
-                    if (this.bnOption.NIFTIModel != null) this.loadnifti();
+            'bnOption.sflag': function () {
+                if (this.bnOption.sflag){
+                    try {
+                        if (this.bnOption.allDATA['surfDATA'] != null) this.loadsurf();
+                        if (this.bnOption.allDATA['nodeDATA'] != null) this.loadnode();
+                        if (this.bnOption.allDATA['edgeDATA'] != null) this.loadedge();
+                        if (this.bnOption.NIFTIModel != null) this.loadnifti();
+                        this.$message.success('绘制曲面完成');
+                    } catch (err) {
+                        this.$message.error(err);
+                    }
+                    this.bnOption.sflag = false;
                 }
-                this.bnOption.flag = false;
             },
             'bnOption.allMaterial.surfMaterial.color' : function () {
                 var surfMesh = this.scene.getObjectByName('surface');
@@ -75,13 +78,13 @@
                     } );
                 }
             },
-            'bnOption.allMaterial.lineMaterial.lineWidth' : function () {
-                console.log('egde')
-                var edge = this.scene.getObjectByName('edge');
-                if (edge) {
+            'bnOption.lflag' : function () {
+                if (this.bnOption.lflag) {
+                    var edge = this.scene.getObjectByName('edge');
                     var lineWidth = this.bnOption.allMaterial.lineMaterial.lineWidth;
                     this.drawMatrix(lineWidth[0], lineWidth[1]);
                 }
+                this.bnOption.lflag = false;
             },
         },
         methods: {
@@ -214,25 +217,30 @@
             },
             loadedge: function(){
                 const edgeloader = new EdgeLoader();
+                const lineMaterial = this.bnOption.allMaterial.lineMaterial;
                 let Alist = edgeloader.loadAList(this.bnOption.allDATA['edgeDATA']);
                 cache.setLocal('edgeAlist', Alist.list);
-                this.drawMatrix(Alist.min, Alist.max, Alist.list);
-                this.bnOption.allMaterial.lineMaterial.minWeight = Alist.min;
-                this.bnOption.allMaterial.lineMaterial.maxWeight = Alist.max;
-                this.bnOption.allMaterial.lineMaterial.step = (Alist.max - Alist.min) / 10;
-                this.bnOption.allMaterial.lineMaterial.lineWidth = [Alist.min, Alist.max];
+                lineMaterial.minWeight = Alist.min;
+                lineMaterial.maxWeight = Alist.max;
+                lineMaterial.step = (Alist.max - Alist.min) / 10;
+                lineMaterial.lineWidth = [Alist.max - (Alist.max - Alist.min) / 10, Alist.max, Alist.list];
+                this.bnOption.lflag = true;
                 delete this.bnOption.allDATA['edgeDATA'];
             },
             drawMatrix:  function ( lowWeight, heightWeight, alist ) {
                 const scene = this.scene;
+                const color = this.bnOption.allMaterial.lineMaterial.color;
+                const size = this.bnOption.allMaterial.lineMaterial.size;
                 this.removeObject(scene.getObjectByName('edge'));
-                var nodeObjects = scene.getObjectByName('node').children;
-                if (nodeObjects.length === 0) return;
+                let nodeObjects = scene.getObjectByName('node');
+                if (nodeObjects === undefined || nodeObjects.children.length === 0) throw '还未添加node';
+                nodeObjects = nodeObjects.children;
                 if ( alist === undefined ) alist = JSON.parse(cache.getLocal('edgeAlist'));
-                if ( !alist ) return;
+                if ( !alist ) throw '添加的矩阵已失效';
                 var group = new THREE.Group();
                 group.name = 'edge';
                 scene.add( group );
+
                 alist.forEach(v=>{
                     let i = v[0], j = v[1], weight = v[2];
                     if ( weight < lowWeight || weight > heightWeight ) return;
@@ -248,8 +256,8 @@
                     var geometry = new MeshLine.LineGeometry();
                     geometry.setPositions( positions );
                     var matLine = new MeshLine.LineMaterial( {
-                        color: 0xFF0000,
-                        linewidth: 0.005 * weight, // in pixels
+                        color: parseInt(color.replace('#','0x'),16),
+                        linewidth: 0.005 * weight * size, // in pixels
                         // vertexColors: THREE.VertexColors,
                         //resolution:  // to be set by renderer, eventually
                         dashed: false
