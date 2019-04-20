@@ -3,12 +3,14 @@ import App from '@/App'
 import router from '@/router'
 import store from '@/store'
 import axios from '@/axios'
+import { ws } from './webSocket'
 // 第三方
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import VueProgressBar from 'vue-progressbar'
 import vuePositionSticky from 'vue-position-sticky'
 import i18n from '@/language'
+import './assets/iconfont/iconfont.css'
 // 自定义
 import '@/assets/css/reset.css'
 import '@/assets/css/global.css'
@@ -37,6 +39,7 @@ Object.keys(filters).forEach(key => {
 })
 
 Vue.prototype.$axios = axios
+Vue.prototype.$webSocket = ws
 new Vue({
     i18n,
     router,

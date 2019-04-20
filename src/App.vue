@@ -1,5 +1,6 @@
 <template>
     <div id="app">
+        <meta name=renderer content=webkit>
         <transition name="el-fade-in-linear" mode="out-in">
             <router-view />
         </transition>

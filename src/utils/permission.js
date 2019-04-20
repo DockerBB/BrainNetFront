@@ -1,6 +1,8 @@
 import router from '@/router'
 import store from '@/store'
 import cache from '@/utils/cache'
+import axios from '@/axios'
+import { ws } from '../webSocket'
 
 // 登录验证，权限验证
 router.beforeEach((to, from, next) => {
@@ -10,23 +12,25 @@ router.beforeEach((to, from, next) => {
             if (to.path === '/login') {
                 next('/')
             } else {
-                // 是否已有用户信息
-                if (!store.state.user) store.commit('SET_USER', JSON.parse(cache.getLocal('user')))
-                if (store.state.user) {
-                    assessPermission(store.state.user.role, to.meta.role, next)
-                } else {
-                    store.dispatch('GET_USER_DATA').then(res => {
-                        assessPermission(res.role, to.meta.role, next)
-                    }).catch(err => {
-                        console.log(err)
+                // 除非重新登陆，不然token不变，并且socket不会因为刷新中断
+                ws.webSocket == null && ws.setWebSocket(cache.getToken())
+                // 后台是否有用户信息
+                axios.post('/live').then(res => {
+                    if (res.data.status === 666 && store.state.user.nickname !== 'public') {
                         // 可根据错误信息，做相应需求，这里默认token值失效
-                        window.alert('登录已失效，请重新登录')
+                        window.alert('Failed, please login again')
                         cache.removeToken()
                         next({ path: '/login', query: { redirect: to.fullPath } })
-                    })
-                }
+                    } else {
+                        if (!store.state.user) store.commit('SET_USER', JSON.parse(cache.getLocal('user')))
+                        if (store.state.user) {
+                            assessPermission(store.state.user.role, to.meta.role, next)
+                        }
+                    }
+                })
             }
         } else {
+            if (from.path !== '/') window.alert('登录已失效，请重新登录')
             next({ path: '/login', query: { redirect: to.fullPath } })
         }
     } else {

@@ -1,5 +1,6 @@
 /* eslint-disable */
 import * as NIFTI from 'nifti-reader-js'
+import * as d3 from 'd3'
 function NIFTILoader() {
   this.x_slice = [];
   this.y_slice = [];
@@ -10,53 +11,56 @@ function NIFTILoader() {
 Object.assign( NIFTILoader.prototype , {
   constructor: NIFTILoader,
   load: function (buffer) {
-    console.log(buffer);
+    let imageBuffer
     if (NIFTI.isNIFTI(buffer)) {
       this.niftiHeader = NIFTI.readHeader(buffer);
       console.log(this.niftiHeader.toFormattedString());
-      var imageBuffer = NIFTI.readImage(this.niftiHeader, buffer);
+      imageBuffer = NIFTI.readImage(this.niftiHeader, buffer);
       console.log(imageBuffer);
       console.log("Is Extentalbe:" + NIFTI.hasExtension(this.niftiHeader));
     } else console.log('fail');
-    var niftiCanvas = document.createElement("canvas");
-    var ctx = niftiCanvas.getContext("2d");
-    var cols = this.niftiHeader.dims[1];
-    var rows = this.niftiHeader.dims[2];
-    var slices = this.niftiHeader.dims[3];
-    var timepoints = this.niftiHeader.dims[4] || 1;
+    let a = d3.rgb(0,0,255),	//蓝色
+        b = d3.rgb(255,0,0);	//红色
+    let color = d3.interpolateHslLong(b,a);
+    let niftiCanvas = document.createElement("canvas");
+    let ctx = niftiCanvas.getContext("2d");
+    let cols = this.niftiHeader.dims[1];
+    let rows = this.niftiHeader.dims[2];
+    let slices = this.niftiHeader.dims[3];
+    let timepoints = this.niftiHeader.dims[4] || 1;
     var imageData = ctx.createImageData(cols, rows);
     niftiCanvas.width = cols;
     niftiCanvas.height = rows;
     this.niftiImage = new Uint8Array(imageBuffer, 0, imageBuffer.byteLength);
-    for (var ctrZ = 0; ctrZ < slices; ctrZ += 1) {
-      // var outputArr = [];
-      for (var ctrY = 0; ctrY < rows; ctrY += 1) {
-        for (var ctrX = 0; ctrX < cols; ctrX += 1) {
-          var offset = ((((ctrZ * rows) + ctrY) * cols) + ctrX);
-          var index = ((ctrY * cols) + ctrX) * 4;
-          var value = this.niftiImage[offset];
-          // imageData.data[index] = (value >> 16) & 0xff;
-          // imageData.data[index + 1] = (value >> 8) & 0xff;
-          // imageData.data[index + 2] = (value) & 0xff;
-          imageData.data[index] = imageData.data[index + 1] = imageData.data[index + 2] = value;
-          imageData.data[index + 3] = 255;
-          // outputArr[outputArr.length] = value;
+    for (let ctrZ = 0; ctrZ < slices; ctrZ += 1) {
+      // let outputArr = [];
+      for (let ctrY = 0; ctrY < rows; ctrY += 1) {
+        for (let ctrX = 0; ctrX < cols; ctrX += 1) {
+          let offset = ((((ctrZ * rows) + ctrY) * cols) + ctrX);
+          let index = ((ctrY * cols) + ctrX) * 4;
+          let roi = this.niftiImage[offset];
+          let rgb
+          if (roi > 0) {
+            rgb = color(roi/116).match(/\d+/g)
+            imageData.data[index] = parseInt(rgb[0]);
+            imageData.data[index + 1] = parseInt(rgb[1]);
+            imageData.data[index + 2] = parseInt(rgb[2]);
+          } else imageData.data[index] = imageData.data[index + 1] = imageData.data[index + 2] = roi;
+          imageData.data[index + 3] = 255;//透明度
         }
-        // console.log(outputArr)
       }
-      // console.log(ctrZ)
       ctx.putImageData(imageData, 0, 0);
       this.z_slice[ctrZ] = niftiCanvas.toDataURL();
     }
     var imageData = ctx.createImageData(cols, rows);
     niftiCanvas.width = cols;
     niftiCanvas.height = rows;
-    for (var ctrY = 0; ctrY < rows; ctrY += 1) {
-      for (var ctrZ = 0; ctrZ < slices; ctrZ += 1) {
-        for (var ctrX = 0; ctrX < cols; ctrX += 1) {
-          var offset = ((((ctrZ * rows) + ctrY) * cols) + ctrX);
-          var index = ((ctrZ * cols) + ctrX) * 4;
-          var value = this.niftiImage[offset];
+    for (let ctrY = 0; ctrY < rows; ctrY += 1) {
+      for (let ctrZ = 0; ctrZ < slices; ctrZ += 1) {
+        for (let ctrX = 0; ctrX < cols; ctrX += 1) {
+          let offset = ((((ctrZ * rows) + ctrY) * cols) + ctrX);
+          let index = ((ctrZ * cols) + ctrX) * 4;
+          let value = this.niftiImage[offset];
           // imageData.data[index] = (value >> 16) & 0xff;
           // imageData.data[index + 1] = (value >> 8) & 0xff;
           // imageData.data[index + 2] = (value) & 0xff;
@@ -70,12 +74,12 @@ Object.assign( NIFTILoader.prototype , {
     var imageData = ctx.createImageData(cols, rows);
     niftiCanvas.width = cols;
     niftiCanvas.height = rows;
-    for (var ctrX = 0; ctrX < cols; ctrX += 1) {
-      for (var ctrZ = 0; ctrZ < slices; ctrZ += 1) {
-        for (var ctrY = 0; ctrY < rows; ctrY += 1) {
-          var offset = ((((ctrZ * rows) + ctrY) * cols) + ctrX);
-          var index = ((ctrZ * rows) + ctrY) * 4;
-          var value = this.niftiImage[offset];
+    for (let ctrX = 0; ctrX < cols; ctrX += 1) {
+      for (let ctrZ = 0; ctrZ < slices; ctrZ += 1) {
+        for (let ctrY = 0; ctrY < rows; ctrY += 1) {
+          let offset = ((((ctrZ * rows) + ctrY) * cols) + ctrX);
+          let index = ((ctrZ * rows) + ctrY) * 4;
+          let value = this.niftiImage[offset];
           // imageData.data[index] = (value >> 16) & 0xff;
           // imageData.data[index + 1] = (value >> 8) & 0xff;
           // imageData.data[index + 2] = (value) & 0xff;

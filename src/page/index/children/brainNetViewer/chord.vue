@@ -6,17 +6,29 @@
 <script>
     /* eslint-disable */
     import * as d3 from 'd3'
+    import { aal90label, Brodmann82label, CustomROI6label, DesikanKilliany68label, Dos160label, Fair34label, HOA112label, LPBA56label } from '../data-index'
+    const emptyMat = new Array(90)
+    for (let i = 0; i < emptyMat.length; i++) {
+        emptyMat[i] = new Array(emptyMat.length).fill(0)
+        emptyMat[i][i] = 1
+    }
     export default {
         name: "chord",
         props: {
-            chordData: Object,
-            atlas: [Array, String],
+            matrix: Array,
+            atlas: String,
             size: Number
         },
         mounted() {
+            this.draw();
+            const ribbons = this.ribbons
+            // setTimeout(function () {
+            //     emptyMat.forEach((arr,i)=>arr[i+45%emptyMat.length] = 1)
+            //     ribbons.remove()
+            // },5*1000)
         },
         watch: {
-            'chordData': function () {
+            'matrix': function () {
                 this.draw();
             },
             'atlas': function () {
@@ -25,15 +37,19 @@
         },
         data() {
             return {
-                chordsize: 1000
+                chordsize: 1000,
+                label: aal90label,
+                ribbons: null
             }
         },
         methods: {
             draw: function () {
                 document.getElementById('chord').innerHTML = ''
                 if (this.chordData === null || this.chordData === '') return;
-                let labelList = this.atlas;
-                let matrix = this.chordData.matrix;
+                let labelList = this.label;
+                // let matrix = this.matrix;
+                let matrix = emptyMat;
+                // console.log(matrix)
                 // var svg = d3.select(this.$el), // 获取svg元素
                 this.chordsize = matrix.length < 100 ? 1000 : matrix.length * 16;
                 var svg = d3.select("#chord").append('svg')
@@ -107,8 +123,9 @@
                     .text(function(d) { return labelList === undefined ? null : labelList[d.index]; });
 
                 // 给之前定义的g这个元素添加样式并绑定数据用来画弦图的弦。
-                g.append("g")
+                this.ribbons = g.append("g")
                     .attr("class", "ribbons")
+                    .attr("id", "ribbons")
                     .selectAll("path")
                     .data(function(chords) { return chords; })
                     .enter().append("path")
@@ -118,7 +135,7 @@
                     .style("fill-opacity", 0.0)
                     .style("stroke", function(d) { return d3.rgb(color(d.target.index)).darker(); })
                     .style("stroke-opacity", 0.67);
-                this.transformSvg(document.getElementById('chord-svg'));
+                // this.transformSvg(document.getElementById('chord-svg'));
             },
             transformSvg: function (svgEl) {
                 var svgString = new XMLSerializer().serializeToString(svgEl);
@@ -139,6 +156,93 @@
                 };
                 img.src = url;
             },
+            hierarchicalEdge: function () {
+                let diameter = 960, //直径
+                    radius = diameter / 2, //半径
+                    innerRadius = radius - 120; //环内半径
+
+                let cluster = d3.cluster()
+                    .size([360, innerRadius]);
+
+                let line = d3.radialLine()
+                    .curve(d3.curveBundle.beta(0.85))
+                    .radius(function(d) { return d.y; })
+                    .angle(function(d) { return d.x / 180 * Math.PI; });
+
+                let svg = d3.select("body").append("svg")
+                    .attr("width", diameter)
+                    .attr("height", diameter)
+                    .append("g")
+                    .attr("transform", "translate(" + radius + "," + radius + ")");
+
+                let link = svg.append("g").selectAll(".link"),
+                    node = svg.append("g").selectAll(".node")
+                // draw
+                function draw(classes) {
+                    var root = packageHierarchy(classes)
+                        .sum(function(d) { return d.size; });
+
+                    cluster(root);
+
+                    link = link
+                        .data(packageImports(root.leaves()))
+                        .enter().append("path")
+                        .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
+                        .attr("class", "link")
+                        .attr("d", line);
+
+                    node = node
+                        .data(root.leaves())
+                        .enter().append("text")
+                        .attr("class", "node")
+                        .attr("dy", "0.31em")
+                        .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+                        .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+                        .text(function(d) { return d.data.key; });
+                };
+                function packageHierarchy(classes) {
+                    var map = {};
+
+                    function find(name, data) {
+                        var node = map[name], i;
+                        if (!node) {
+                            node = map[name] = data || {name: name, children: []};
+                            if (name.length) {
+                                node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
+                                node.parent.children.push(node);
+                                node.key = name.substring(i + 1);
+                            }
+                        }
+                        return node;
+                    }
+
+                    classes.forEach(function(d) {
+                        find(d.name, d);
+                    });
+
+                    return d3.hierarchy(map[""]);
+                }
+
+                // Return a list of imports for the given array of nodes.
+                function packageImports(nodes) {
+                    var map = {},
+                        imports = [];
+
+                    // Compute a map from name to node.
+                    nodes.forEach(function(d) {
+                        map[d.data.name] = d;
+                    });
+
+                    // For each import, construct a link from the source to target node.
+                    nodes.forEach(function(d) {
+                        if (d.data.imports) d.data.imports.forEach(function(i) {
+                            imports.push(map[d.data.name].path(map[i]));
+                        });
+                    });
+
+                    return imports;
+                }
+            }
         }
     }
 </script>

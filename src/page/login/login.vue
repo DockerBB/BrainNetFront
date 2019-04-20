@@ -5,14 +5,14 @@
             <el-form class="login-form" :model="form" @submit.native.prevent="verify">
                 <el-form-item>
                     <!-- username -->
-                    <el-input v-model="form.username" placeholder="账号" auto-complete='off' />
+                    <el-input v-model="form.username" :placeholder="$t('login.account')" auto-complete='off' />
                     <span class="input-icon prepend-icon">
                         <i class="el-icon-my-user"></i>
                     </span>
                 </el-form-item>
                 <el-form-item :hidden="form.username === 'public'">
                     <!-- password -->
-                    <el-input v-model="form.password" placeholder="密码" auto-complete='off' :type="pwdWatch ? 'text' : 'password'" />
+                    <el-input v-model="form.password" :placeholder="$t('login.password')" auto-complete='off' :type="pwdWatch ? 'text' : 'password'" />
                     <span class="input-icon prepend-icon">
                         <i class="el-icon-my-lock"></i>
                     </span>
@@ -22,7 +22,7 @@
                 </el-form-item>
                 <!-- submit -->
                 <el-input v-if="form.username === 'public'" class="login_btn" type="submit" :value="transform('playground')" />
-                <div v-else align="end"><el-button native-type="submit" round>{{ transform('login') }}</el-button><el-button @click="signon" type="primary" round>{{ transform('signon') }}</el-button></div>
+                <div v-else align="end"><el-button native-type="submit" round>{{ transform('login') }}</el-button><el-button @click="signon" type="primary" round>{{ transform('signup') }}</el-button></div>
             </el-form>
         </div>
 
@@ -81,6 +81,7 @@ export default {
                 })
                 cache.setToken(res.data.data.token)
                 this.$message.success(res.data.message)
+                sessionStorage.removeItem('gretnaState')
                 this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
             }).catch((err) => {
                 console.log(err)
@@ -88,36 +89,7 @@ export default {
             })
         },
         signon() {
-            this.$prompt('请输入用户名', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                inputPattern: /[\w!#$%&'*+/=?^_`{|}~-\u4e00-\u9fa5]*/,
-                inputErrorMessage: '无效用户名'
-            }).then(({ value }) => {
-                this.form.name = value
-                this.$axios.post('/signon', this.form, {
-                    headers: {
-                        'Content-type': 'application/json;charset=UTF-8'
-                    }
-                }).then((res) => {
-                    console.log(res.data)
-                    this.$store.state.user = {
-                        nickname: res.data.data.name,
-                        avatar: res.data.data.avatarUrl
-                    }
-                    cache.setToken(res.token)
-                    this.$message.success(res.data.message)
-                    this.$route.query.redirect ? this.$router.push(this.$route.query.redirect) : this.$router.push('/')
-                }).catch((err) => {
-                    console.log(err)
-                    this.$message.error('注册失败')
-                })
-            }).catch(() =>
-                this.$message({
-                    type: 'info',
-                    message: '注册已取消'
-                })
-            )
+            this.$router.push('/signup')
         },
         transform(key) {
             return this.$t('login.' + key)

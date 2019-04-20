@@ -8,8 +8,12 @@ const home = () => import('@/page/index/children/home/home')
 const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
 const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
 const gretna = () => import('@/page/index/children/gretna/gretna')
+const fmri = () => import('@/page/index/children/fmri/fmri')
+// const ftsys = () => import('@/page/index/children/ftsys/ftsys')
 // login
 const login = () => import('@/page/login/login')
+// Sign Up
+const Signup = () => import('@/page/login/signup')
 // other
 const page401 = () => import('@/page/other/page401')
 const page404 = () => import('@/page/other/page404')
@@ -36,11 +40,20 @@ export const sideRoutes = [
         }
     },
     {
+        name: 'fmri',
+        path: 'fmri',
+        component: fmri,
+        meta: {
+            icon: 'iconfont icon-timeSeries'
+            // title: '网络分析'
+        }
+    },
+    {
         name: 'gretna',
         path: 'networkanalysis',
         component: gretna,
         meta: {
-            icon: 'el-icon-share'
+            icon: 'iconfont icon-fenxi'
             // title: '网络分析'
         }
     },
@@ -52,10 +65,15 @@ export const sideRoutes = [
             sideOption: brainSide
         },
         meta: {
-            icon: 'el-icon-menu',
+            icon: 'iconfont icon-danao',
             // title: '脑神经网络',
             switchon: true
         }
+    },
+    {
+        name: 'ftsys',
+        path: 'ftsys',
+        component: ftsys
     }
 ]
 
@@ -80,6 +98,11 @@ export default new Router({
             name: 'login',
             path: '/login',
             component: login
+        },
+        {
+            name: 'signup',
+            path: '/signup',
+            component: Signup
         },
         {
             name: '401',

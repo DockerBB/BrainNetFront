@@ -8,7 +8,9 @@ import {instance} from "../utils/request";
 axios.defaults.baseURL = 'http:' + window.g.API_URL
 axios.defaults.withCredentials = true
 axios.interceptors.request.use(config => {
-    config.headers['content-type'] = ['application/json;charset=UTF-8','application/x-www-form-urlencoded;charset=UTF-8'];
+    // config.headers['content-type'] = ['application/json;charset=UTF-8','application/x-www-form-urlencoded;charset=UTF-8','multipart/form-data'];
+    if (config.data instanceof Object) config.headers['content-type'] = 'application/json;charset=UTF-8'
+    if (config.data instanceof FormData) config.headers['content-type'] = 'multipart/form-data'
     // if (cache.getToken()) {
     //     config.headers['Authorization'] = `Bearer ${cache.getToken()}`
     // }
@@ -19,13 +21,14 @@ axios.interceptors.request.use(config => {
 axios.interceptors.response.use(
   response => {
     if (response.headers['content-type'].indexOf('application/json') >= 0 && response.data.status !== 0) {
-      console.log(response)
+      // console.log(response)
       //登录失败不进行弹窗显示
       if (response.data.status !== 666) {
         ElementUI.Message.warning(response.data.message)
       }
       if (response.data.status === 401 || response.data.status === 403) {
           Store.commit('SET_LOGOUT')
+          cache.removeToken()
           Router.push('/login')
       }
     }
@@ -33,12 +36,19 @@ axios.interceptors.response.use(
   },
   error => {
     console.log('请求失败', error)
-    if (error.response.status === 401 || error.response.status === 403) {
-        ElementUI.Message.info('此功能需要登陆使用')
-        Store.commit('SET_LOGOUT')
-        Router.push('/login')
-        return Promise.reject(error)
-    }
+      if (error.response.status === 401 || error.response.status === 403) {
+          ElementUI.Message.info('此功能需要登陆使用')
+          Store.commit('SET_LOGOUT')
+          Router.push('/login')
+          return Promise.reject(error)
+      }
+      if (error.response.status === 402) {
+          let uriname = error.request.responseURL.substring(error.request.responseURL.lastIndexOf('/')+1)
+          if (uriname.indexOf('.') !== -1) {
+              ElementUI.Message.info('resource couldn\'t respone: file '+uriname+' not found')
+              return Promise.reject(error)
+          }
+      }
     ElementUI.Message.error(error.message + ' : ' + error.request.responseURL)
     return Promise.reject(error)
   }

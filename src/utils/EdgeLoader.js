@@ -54,9 +54,9 @@ Object.assign( EdgeLoader.prototype ,{
       var i = 0;
       data.split(/\n/g).forEach(function(row){
           if (row[0] != '#' && row[0]) {
-              var mrow = []
-              row.split(/\s/g).forEach(function (cell, j) {
-                  if (cell) mrow[j] = parseFloat(cell);
+              let mrow = []
+              row.split(/\s+|,/g).forEach(function (cell, j) {
+                  if (cell !== '') mrow.push(parseFloat(cell));
               });
               matrix[i] = mrow;
               i++;
@@ -71,15 +71,13 @@ Object.assign( EdgeLoader.prototype ,{
           min = 100;
       data.split(/\n/g).forEach(function(row){
           if (row[0] != '#' && row[0]) {
-              row.split(/\s/g).forEach(function (cell, j) {
-                  if (cell) {
-                      if (cell != 0){
-                          vf = parseFloat(cell);
-                          list.push([i, j, vf]);
-                      }
-                      max = max >= vf ? max : vf;
-                      min = min <= vf ? min : vf;
+              row.split(/\s|,/g).filter(v=>v !== '').forEach(function (cell, j) {
+                  if (parseFloat(cell) !== 0.0){
+                      vf = parseFloat(cell);
+                      list.push([i, j, vf]);
                   }
+                  max = max >= vf ? max : vf;
+                  min = min <= vf ? min : vf;
               });
               i++;
           }

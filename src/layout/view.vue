@@ -14,6 +14,7 @@ export default {
     mounted() {
         if (this.$route.meta.keep) {
             this.keepRoutes.push(this.$route.name)
+            this.$axios.get('/live')
         }
     }
 }

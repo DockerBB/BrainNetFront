@@ -7,14 +7,16 @@ export default {
         documents: '文档',
         'bn-view': '脑可视化',
         gretna: '复杂网络分析',
+        fmri: '时间序列分析',
         permission: '权限测试'
     },
     login: {
         playground: '试用看看',
         login: '登录',
-        signon: '注册',
-        username: '账号',
+        signup: '注册',
+        account: '账号',
         password: '密码',
+        verifyCode: '发送验证码',
         weChat: '微信',
         qq: 'QQ'
     }

@@ -1,8 +1,11 @@
+/* eslint-disable */
 import Vue from 'vue'
 import Vuex from 'vuex'
 import i18n from '@/language'
 import cache from '@/utils/cache'
 import { getLogin, getUser, signOn } from '@/api'
+import * as ElementUI from "element-ui";
+
 
 Vue.use(Vuex)
 
@@ -10,7 +13,17 @@ const state = {
     logs: [], // 错误日志
     user: '', // 用户信息{headimgurl,nickname}
     language: 'en',
-    bnOption: { sflag: false, lflag: false, allMaterial: {} }
+    bnOption: { sflag: false, lflag: false, allMaterial: {} },
+    netAnalysis: {
+        state: 'finish',
+        time: 0,
+    },
+    fmri: {
+        state: 'fail',
+        time: 0,
+        outputText: ''
+    },
+    outputText: ''
 }
 const getters = {
 }
@@ -32,6 +45,36 @@ const mutations = {
     SET_LOGOUT(state) {
         state.user = ''
         cache.removeToken()
+    },
+    appendTBPO(state, payload) {
+        console.log("in store, append tbpo");
+        state.toBePoppedOut.push(payload);
+    },
+    updateNotificationSimplified(state, payload) {
+        state.notificationTableDataSimplified = payload;
+    },
+    updateSysMsgSimplified(state, payload) {
+        state.sysMsgData = payload;
+    },
+    pushFrontSysMsgItem(state, payload) {
+        if (state.sysMsgData.sysMsgItems.length === 6) {
+            state.sysMsgData.moreUnread = state.sysMsgData.moreUnread || state.sysMsgData.sysMsgItems[5].unread;
+            state.sysMsgData.sysMsgItems.splice(5, 1); // 弹出尾部
+        }
+        state.sysMsgData.sysMsgItems.splice(0, 0, payload); // 插入头部
+    },
+    popFrontTBPO(state) {
+        state.toBePoppedOut.splice(0, 1);
+    },
+    changeMonitorBrowsingStatus(state, payload) {
+        state.monitorBrowsingStatus = payload;
+        sessionStorage.setItem('monitorBrowsingStatus', payload);
+    },
+    pushMatlabOutput(state, text) {
+        state.outputText = text
+    },
+    pushfMRIOutput(state, text) {
+        state.fmri.outputText = text
     }
 }
 const actions = {

@@ -28,8 +28,8 @@
                                 active-color="#13ce66"
                                 inactive-color="#ff4949">
                         </el-switch>
+                        <el-slider v-model="bnOption.allMaterial.surfMaterial.clipOffset" :min="-100.0" :max="100.0" :step="0.1" range></el-slider>
                     </el-form-item>
-                    <el-button @click="getPhoto">屏幕快照</el-button>
                 </el-form>
                 <el-button slot="reference" type="text">{{ translations('surfAttr') }}</el-button>
             </el-popover>
@@ -51,9 +51,13 @@
                 <h3>{{ translations('edgeAttr') }}</h3>
                 <div v-if="bnOption.allMaterial.lineMaterial" style="text-align: right; margin: 0">
                     <el-form v-if="bnOption.allMaterial.lineMaterial" :label-position="'left'" label-width="200px" :model="bnOption.allMaterial.lineMaterial">
-                        <el-form-item label="Connection Weight Range">
-                            <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :min="bnOption.allMaterial.lineMaterial.minWeight" :max="bnOption.allMaterial.lineMaterial.maxWeight" :range="true" :step="bnOption.allMaterial.lineMaterial.step" show-stops></el-slider>
-                        </el-form-item>
+                        <span style="float: left">Connection Weight Range</span>
+                        <br/>
+                        <el-row>
+                            <el-input-number style="float: left" v-model="bnOption.allMaterial.lineMaterial.lineWidth[0]" :precision="2" :step="0.01" :min="bnOption.allMaterial.lineMaterial.minWeight" :max="bnOption.allMaterial.lineMaterial.lineWidth[1]" @change="refreashSlider()"></el-input-number>
+                            <el-input-number v-model="bnOption.allMaterial.lineMaterial.lineWidth[1]" :precision="2" :step="0.01" :min="bnOption.allMaterial.lineMaterial.lineWidth[0]" :max="bnOption.allMaterial.lineMaterial.maxWeight" @change="refreashSlider()"></el-input-number>
+                        </el-row>
+                        <el-slider v-model="bnOption.allMaterial.lineMaterial.lineWidth" :min="bnOption.allMaterial.lineMaterial.minWeight" :step="0.01" :max="bnOption.allMaterial.lineMaterial.maxWeight" :range="true"></el-slider>
                         <el-button @click="() => bnOption.lflag = true">Set Range</el-button>
                         <!--<el-form-item label="Connection Opacity">-->
                             <!--<el-slider v-model="bnOption.allMaterial.lineMaterial.opacity" :min="0.0" :max="1.0" :step="0.01"></el-slider>-->
@@ -78,29 +82,31 @@
                 <el-button slot="reference" type="text">{{ translations('niftiAttr') }}</el-button>
             </el-popover>
         </div>
-        <el-dialog :title=" dialogTitle " :visible.sync="dialogTableVisible">
+        <el-dialog :title=" dialogTitle " :visible.sync="dialogTableVisible" :modal-append-to-body="false">
             <el-tree
                     :data="dialogData"
                     node-key="id"
-                    :expand-on-click-node="true">
+                    :expand-on-click-node="true"
+                    :modal-append-to-body='false'>
                 <span class="custom-tree-node" slot-scope="{ node, data }">
-                    <!--<i v-if="data.children === undefined" class="el-icon-document"><span>{{ node.label }}</span></i>-->
-                    <!--<i v-else class="el-icon-news" ><span>{{ node.label }}</span></i>-->
-                    <span v-if="data.children === undefined"><img src="@/assets/img/wendang.png" height="16" width="16"/>{{ node.label }}</span>
-                    <span v-else><img src="@/assets/img/wenjianjia.png" height="16" width="16"/>{{ node.label }}</span>
-                    <el-button v-if="data.children === undefined" type="text" size="mini" @click="() => downloadData(node)">添加</el-button>
+                    <span v-if="data.children == undefined" @click="() => downloadData(node)"><i class="el-icon-document"></i>{{ node.label }}</span>
+                    <span v-else><i class="iconfont icon-dir"></i>{{ node.label }}</span>
                 </span>
             </el-tree>
             <span slot="footer" class="dialog-footer">
-                <el-button @click="localfileinput">从本地导入</el-button>
-                <el-button @click="dialogTableVisible = false">取 消</el-button>
+                <el-button @click="localfileinput">{{translations('importfile')}}</el-button>
+                <el-button @click="dialogTableVisible = false">{{$t('el.messagebox.cancel')}}</el-button>
             </span>
         </el-dialog>
+        <!--<el-dialog title="Connection Chord" :visible.sync="chordVisible" :modal-append-to-body="false">-->
+            <!--<chord :matrix="chordData" :atlas="atlasSelect" :size="500"></chord>-->
+        <!--</el-dialog>-->
     </div>
 </template>
 <script>
     /* eslint-disable */
     import { NIFTILoader } from '@/utils/NIFTILoader'
+    import chord from './chord'
     import { surfIndex, nodeIndex, edgeIndex, niftiIndex } from '../data-index'
     import i18nLang from './i18n-lang'
     const keyName = 'brainViewer'
@@ -133,18 +139,16 @@
           nodeLabel: null,
           edgeLabel: null,
           niftiLabel: null,
+          atlasSelect: 'aal',
+          chordData: [],
+          chordVisible: true,
           bnOption: this.$store.state.bnOption
       }
     },
+    components: {chord},
     methods: {
         init: function() {
           // document.getElementById('menuItem').style.display = 'none';
-        },
-        getPhoto: function() {
-          var canvas = document.getElementById('WebGL-output').children[0];
-          // var canvas = URL.createObjectURL(document.getElementById('WebGL-output').children[0]);
-          var gl = canvas.getContext("experimental-webgl", {preserveDrawingBuffer: true});
-          console.log(canvas.toDataURL());
         },
         downloadData: function(node) {
           let url = node.data.uri;
@@ -232,6 +236,13 @@
         },
         translations(key){
             return this.$t('brainViewer.' + key)
+        },
+        refreashSlider(){
+            let lineWidth = this.bnOption.allMaterial.lineMaterial.lineWidth
+            // this.$refs['myslider'].value = [0,10]
+            this.bnOption.allMaterial.lineMaterial.lineWidth = null
+            this.bnOption.allMaterial.lineMaterial.lineWidth = lineWidth
+            // this.$set(lineWidth, 0, 0.5)
         }
     },
     created() {
@@ -244,13 +255,13 @@
           surfMaterial: {
               color: '#f8f8ff',
               opacity: 0.55,
-              clip: false
+              clip: false,
+              clipOffset: [-100,0]
           },
           lineMaterial: {
-              color: '#ffffe0',
+              color: '#ffff00',
               // opacity: 1,
               lineWidth: [0,1],
-              step:1,
               minWeight:0,
               maxWeight:10,
               size: 1

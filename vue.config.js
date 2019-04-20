@@ -1,6 +1,6 @@
 const path = require('path')
 module.exports = {
-    baseUrl: '/',
+    baseUrl: '/bsci',
     outputDir: 'docs',
     lintOnSave: true,
     productionSourceMap: false,
@@ -15,6 +15,7 @@ module.exports = {
         }
     },
     devServer: {
+        disableHostCheck: true,
         port: 8002
     }
 }

@@ -8,7 +8,8 @@ export default {
             surfAttr: '设置脑曲面属性',
             nodeAttr: '设置节点属性',
             edgeAttr: '设置联结属性',
-            niftiAttr: '设置容器属性'
+            niftiAttr: '设置容器属性',
+            importfile: '本地导入'
         }
     },
     en: {
@@ -20,7 +21,8 @@ export default {
             surfAttr: 'Setting surface',
             nodeAttr: 'Setting nodal',
             edgeAttr: 'Setting connectivity',
-            niftiAttr: 'Setting volume'
+            niftiAttr: 'Setting volume',
+            importfile: 'Import From Local'
         }
     }
 }
