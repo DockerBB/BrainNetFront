@@ -8,6 +8,7 @@ export default {
         'bn-view': 'BrainNet Viewer',
         gretna: 'Network Analysis',
         fmri: 'fMRI Preprocessing',
+        smri: 'sMRI Preprocessing',
         permission: 'Permission'
     },
     login: {

@@ -23,6 +23,11 @@ const state = {
         time: 0,
         outputText: ''
     },
+    smri: {
+        state: 'fail',
+        time: 0,
+        outputText: ''
+    },
     outputText: ''
 }
 const getters = {

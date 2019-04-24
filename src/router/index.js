@@ -9,6 +9,7 @@ const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
 const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
 const gretna = () => import('@/page/index/children/gretna/gretna')
 const fmri = () => import('@/page/index/children/fmri/fmri')
+const smri = () => import('@/page/index/children/smri/smri')
 // const ftsys = () => import('@/page/index/children/ftsys/ftsys')
 // login
 const login = () => import('@/page/login/login')
@@ -49,6 +50,15 @@ export const sideRoutes = [
         }
     },
     {
+        name: 'smri',
+        path: 'smri',
+        component: smri,
+        meta: {
+            icon: 'iconfont icon-timeSeries'
+            // title: '网络分析'
+        }
+    },
+    {
         name: 'gretna',
         path: 'networkanalysis',
         component: gretna,
@@ -69,12 +79,12 @@ export const sideRoutes = [
             // title: '脑神经网络',
             switchon: true
         }
-    },
-    {
-        name: 'ftsys',
-        path: 'ftsys',
-        component: ftsys
     }
+    // {
+    //     name: 'ftsys',
+    //     path: 'ftsys',
+    //     component: ftsys
+    // }
 ]
 
 export default new Router({

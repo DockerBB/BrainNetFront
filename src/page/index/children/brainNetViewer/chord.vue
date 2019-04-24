@@ -121,128 +121,67 @@
                     })
                     .style("text-anchor", d => ( d.startAngle + d.endAngle ) / 2 < Math.PI  ? "start" : "end")
                     .text(function(d) { return labelList === undefined ? null : labelList[d.index]; });
-
-                // 给之前定义的g这个元素添加样式并绑定数据用来画弦图的弦。
-                this.ribbons = g.append("g")
-                    .attr("class", "ribbons")
-                    .attr("id", "ribbons")
-                    .selectAll("path")
-                    .data(function(chords) { return chords; })
-                    .enter().append("path")
-                    .attr("d", ribbon)
-                    // 弦的填充色是目标点的索引值确定的
-                    .style("fill", function(d) { return color(d.target.index); })
-                    .style("fill-opacity", 0.0)
-                    .style("stroke", function(d) { return d3.rgb(color(d.target.index)).darker(); })
-                    .style("stroke-opacity", 0.67);
-                // this.transformSvg(document.getElementById('chord-svg'));
             },
-            transformSvg: function (svgEl) {
-                var svgString = new XMLSerializer().serializeToString(svgEl);
-                var preface = '<?xml version="1.0" standalone="no"?>\r\n';
-                var svg = new Blob([preface, svgString], {type: "image/svg+xml;charset=utf-8"});
-                var canvas = document.createElement("canvas");
-                canvas.width = this.chordsize;
-                canvas.height = this.chordsize;
-                var ctx = canvas.getContext("2d");
-                var img = new Image();
-                var url = URL.createObjectURL(svg);
-                const size = this.size;
-                img.onload = function() {
-                    ctx.drawImage(img, 0, 0);
-                    var png = canvas.toDataURL("image/png");
-                    document.getElementById('chord').innerHTML = '<img src="'+png+'" width="'+size+'" height="'+size+'"/>';
-                    URL.revokeObjectURL(png);
-                };
-                img.src = url;
-            },
-            hierarchicalEdge: function () {
-                let diameter = 960, //直径
-                    radius = diameter / 2, //半径
-                    innerRadius = radius - 120; //环内半径
-
-                let cluster = d3.cluster()
-                    .size([360, innerRadius]);
-
-                let line = d3.radialLine()
-                    .curve(d3.curveBundle.beta(0.85))
-                    .radius(function(d) { return d.y; })
-                    .angle(function(d) { return d.x / 180 * Math.PI; });
-
-                let svg = d3.select("body").append("svg")
-                    .attr("width", diameter)
-                    .attr("height", diameter)
-                    .append("g")
-                    .attr("transform", "translate(" + radius + "," + radius + ")");
-
-                let link = svg.append("g").selectAll(".link"),
-                    node = svg.append("g").selectAll(".node")
-                // draw
-                function draw(classes) {
-                    var root = packageHierarchy(classes)
-                        .sum(function(d) { return d.size; });
-
-                    cluster(root);
-
-                    link = link
-                        .data(packageImports(root.leaves()))
-                        .enter().append("path")
-                        .each(function(d) { d.source = d[0], d.target = d[d.length - 1]; })
-                        .attr("class", "link")
-                        .attr("d", line);
-
-                    node = node
-                        .data(root.leaves())
-                        .enter().append("text")
-                        .attr("class", "node")
-                        .attr("dy", "0.31em")
-                        .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
-                        .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-                        .text(function(d) { return d.data.key; });
-                };
-                function packageHierarchy(classes) {
-                    var map = {};
-
-                    function find(name, data) {
-                        var node = map[name], i;
-                        if (!node) {
-                            node = map[name] = data || {name: name, children: []};
-                            if (name.length) {
-                                node.parent = find(name.substring(0, i = name.lastIndexOf(".")));
-                                node.parent.children.push(node);
-                                node.key = name.substring(i + 1);
-                            }
-                        }
-                        return node;
-                    }
-
-                    classes.forEach(function(d) {
-                        find(d.name, d);
-                    });
-
-                    return d3.hierarchy(map[""]);
-                }
-
-                // Return a list of imports for the given array of nodes.
-                function packageImports(nodes) {
-                    var map = {},
-                        imports = [];
-
-                    // Compute a map from name to node.
-                    nodes.forEach(function(d) {
-                        map[d.data.name] = d;
-                    });
-
-                    // For each import, construct a link from the source to target node.
-                    nodes.forEach(function(d) {
-                        if (d.data.imports) d.data.imports.forEach(function(i) {
-                            imports.push(map[d.data.name].path(map[i]));
-                        });
-                    });
-
-                    return imports;
-                }
-            }
+            // hierarchicalEdge: function () {
+            //     const data = aal90label.map(v=>{name:v,})
+            //     const root = d3.tree(d3.hierarchy(data)
+            //         .sort((a, b) => (a.height - b.height) || a.data.name.localeCompare(b.data.name)));
+            //
+            //     const svg = d3.select('#chord')
+            //         .append('svg')
+            //         .style("width", "100%")
+            //         .style("height", "auto")
+            //         .style("padding", "10px")
+            //         .style("box-sizing", "border-box")
+            //         .style("font", "10px sans-serif");
+            //
+            //     const g = svg.append("g");
+            //
+            //     const link = g.append("g")
+            //         .attr("fill", "none")
+            //         .attr("stroke", "#555")
+            //         .attr("stroke-opacity", 0.4)
+            //         .attr("stroke-width", 1.5)
+            //         .selectAll("path")
+            //         .data(root.links())
+            //         .enter().append("path")
+            //         .attr("d", d3.linkRadial()
+            //             .angle(d => d.x)
+            //             .radius(d => d.y));
+            //
+            //     const node = g.append("g")
+            //         .attr("stroke-linejoin", "round")
+            //         .attr("stroke-width", 3)
+            //         .selectAll("g")
+            //         .data(root.descendants().reverse())
+            //         .enter().append("g")
+            //         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
+            //
+            //     node.append("circle")
+            //         .attr("fill", d => d.children ? "#555" : "#999")
+            //         .attr("r", 2.5);
+            //
+            //     node.append("text")
+            //         .attr("dy", "0.31em")
+            //         .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
+            //         .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
+            //         .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
+            //         .text(d => d.data.name)
+            //         .filter(d => d.children)
+            //         .clone(true).lower()
+            //         .attr("stroke", "white");
+            //
+            //     document.body.appendChild(svg.node());
+            //
+            //     const box = g.node().getBBox();
+            //
+            //     svg.remove()
+            //         .attr("width", box.width)
+            //         .attr("height", box.height)
+            //         .attr("viewBox", `${box.x} ${box.y} ${box.width} ${box.height}`);
+            //
+            //     return svg.node();
+            // }
         }
     }
 </script>

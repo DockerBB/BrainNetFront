@@ -8,6 +8,7 @@ export default {
         'bn-view': '脑可视化',
         gretna: '复杂网络分析',
         fmri: '时间序列分析',
+        smri: '时间序列分析(sMRI)',
         permission: '权限测试'
     },
     login: {
