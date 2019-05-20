@@ -9,6 +9,7 @@ export default {
         gretna: 'Network Analysis',
         fmri: 'fMRI Preprocessing',
         smri: 'sMRI Preprocessing',
+        dti: 'DTI Preprocessing',
         permission: 'Permission'
     },
     login: {

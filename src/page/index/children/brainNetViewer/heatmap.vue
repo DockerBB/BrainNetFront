@@ -1,17 +1,11 @@
 <template>
-    <canvas id="chord">
-    </canvas>
+    <div id="heatmap">
+    </div>
 </template>
 
 <script>
     /* eslint-disable */
     import * as d3 from 'd3'
-    import { aal90label, Brodmann82label, CustomROI6label, DesikanKilliany68label, Dos160label, Fair34label, HOA112label, LPBA56label } from '../data-index'
-    // const emptyMat = new Array(90)
-    // for (let i = 0; i < emptyMat.length; i++) {
-    //     emptyMat[i] = new Array(emptyMat.length).fill(0)
-    //     emptyMat[i][(i+1)%emptyMat.length] = 1
-    // }
     const emptyMat = [
         [-1.269572809654654,-0.08020675116930993,-0.7478195433337952,-0.8479906239291571,-1.13003420688079,0.4391765797165346,1.2856070726292201,-1.0086759542849564,-0.8794650068388915,0.08990271233639481,-1.130579141865024,0.3304753832544839,-0.8472215077636869,-0.533309909925745,-1.3587301794958622,0.8878346632629854,0.7838247413795707,-0.3424194874886508,2.5349551508917147,1.121642317489734,0.3304753832544839,-0.08501141993009177,-1.296473591883409,-0.1940648339023175,-0.10910761844578415,-1.318095733298809,-0.5585361393800339,-0.33049134255262935,-1.0126331558216461,0.5090795971893116,-0.02116984664819197,-1.5988602594788819,0.03248850063068608,-1.3494012552430432,0.9732778399185951,-0.2330032106234364,1.5622981624437315,-0.9202475004488103,0.10052447355849643,0.6288381274042806,-0.8780388786740836,0.9177255874472608,-0.32104562636923323,-0.801950996767107,-0.6515493145044435,-0.027878993121145543,-0.9607290735383445,0.7838247413795707,-0.15121491651825,1.3649659792984383,0.06537517588967098,1.6317983594033725,-1.0095891611216918,-0.8196397055103514,0.597929809611321,-1.1136362751623496,-0.9686013200883272,-0.7600363316223082,-0.42082883814884886,-0.35159285443762883,0.3304753832544839,1.1077280859442873,-0.1940648339023175,0.38473455277472596,-0.47986137673704143,0.2131597233548378,-1.1203931301974996,-0.02116984664819197,-0.5315022741867215,0.2514633727382159,0.597929809611321,3.076900973043015,-0.8472215077636869,0.2514633727382159,-0.1953516970966002,-1.1998482684000593,0.0033990149691728393,0.9558374775634005,0.2134397087176235,-0.9443696219091076,1.0459349158980968,-0.19764856082182294,-0.5883310273520258,-0.8472215077636869,-0.6768117094848107,-0.97738552779752,0.597929809611321,0.3647820089498912,-0.32809763584102125,-0.7055860030667751,-0.47082687759359915,-0.07397676938617341,-0.16785150145429964,1.64422331853706,-0.26115824713391184,-0.39489154801556453,-1.1023205990345954,-0.48154863333678755,-1.0126331558216461,0.3131355081779846],
         [-0.08020675116930993,-0.856623897357429,-0.3029014446641026,-0.06333900546573315,-0.433322098750837,0.10839591698504224,-0.21438829877215357,0.09586933929662857,-0.3450183378344702,-1.1878576013975273,2.2239210621073187,-0.4962445518470454,-0.6498858935402534,-0.7995559029324057,-1.2792541537539004,-0.06083905413471745,0.5714098303578841,0.15507951553570273,-0.17979311132455483,0.46981007626139665,0.13611147790382067,-0.4167026501280322,-0.9436480521020517,0.13611147790382067,0.8542091617104395,-0.6107524762630996,-0.8199523925281508,-0.1545688100476699,-0.37637936366550095,0.0357062847759065,-0.7471584779822813,-1.0229455984101081,1.0249054710841776,-1.2322080663734902,0.10187146060728575,-0.6094122647598783,0.5069724487935763,-1.2367418155796335,0.8746326688117723,1.4428318371384026,-0.8780388786740836,1.4428318371384026,0.2850222534647578,-0.7089733531708754,-0.6522721282756291,-0.604050801865791,-0.9654589869377758,0.37943176898874087,-0.06333900546573315,-0.03577730613831514,-0.604050801865791,-0.4231642790325735,-1.2332519261618646,-1.02763341757842,0.3931797812652823,-0.29520425959100594,-0.7515917860306506,0.4451126057504691,-1.0582843344256836,-0.6571471463564792,-0.433322098750837,-0.2018467951397916,0.13611147790382067,-0.7443719905338948,-0.8224979609973788,-0.04637316143119532,-0.4490658515019535,-0.38167209314137956,0.5714098303578841,0.9226572904753136,-0.433322098750837,1.2832247231757152,-0.6498858935402534,0.9226572904753136,0.4451126057504691,-0.7897750503665384,-0.19946739837522176,0.08987678444037812,-1.2184035227796277,-1.2145162515721724,-0.46608035177515766,-0.8593681799501284,-0.36837608644039166,-0.9902177725715117,-0.6498858935402534,-1.0575525373914867,0.13611147790382067,0.15507951553570273,-1.1549655381058743,-0.7089733531708754,-0.5611089819824046,-1.0576286985416363,-0.5277022020600965,-0.17979311132455483,-0.8376478733741746,-0.8199523925281508,-0.14843892937354108,0.3915649692752873,-0.9561849567642264,0.32743856119655135],
@@ -115,22 +109,8 @@
         [0.3131355081779846,0.32743856119655135,0.32908655833759753,0.6487526687354305,-0.30789684899350156,1.17095355760586,1.193326713415892,-0.6492206415643867,-0.6740773144059978,0.04476161381091372,0.1598278814045271,1.2121679613856438,-0.8349683391540257,0.06537517588967098,-0.4722682143715501,0.5899484514928766,2.4319484734653556,1.17095355760586,2.4319484734653556,1.4785428613651317,0.8598633844497285,0.6253508078124604,-0.8986679721914609,0.3131355081779846,1.2121679613856438,-0.8799009818412739,0.24117198788480892,-0.004901631822203001,0.37321468417709763,2.1282754405510134,0.9597684195276035,-1.4078831441767186,-0.011293810432775586,-1.1047421843527174,2.650685346215949,1.3171875351956441,0.7206196978475502,-0.9924589183661671,1.4823107703386242,0.39496244435343936,-0.9002722883406896,2.650685346215949,-0.3630708910789893,-0.10908619074141754,-0.3097407172292608,0.1598278814045271,0.9732778399185951,2.4319484734653556,0.6155415523941925,0.928334278737711,0.1598278814045271,0.42748585249491616,-0.384752886621329,-0.3653818340858189,1.5894065780924043,-0.49580158923552786,0.4662574998968794,0.9732778399185951,0.945601684293402,0.32908655833759753,-0.08576631541786231,2.9610683912568194,-0.30789684899350156,0.05392634099077589,0.6537700115892108,0.7965808371129535,0.0578950018331093,-0.35938777620099605,0.48491217457179925,1.17095355760586,0.5963680547834654,1.9831320887413357,0.06537517588967098,0.2998852861731738,0.6487526687354305,-0.039567934525326705,-0.13212670217496392,1.5430603516547619,-0.6993656799485205,-1.2575916885900809,0.5963680547834654,0.1598278814045271,0.9732778399185951,0.2998852861731738,0.3131355081779846,0.12754416618753991,1.5894065780924043,0.7004233277283707,0.8238093913202846,-0.6085260273701282,-0.05009424076097422,0.6264035236989106,0.13413452101425902,0.3131355081779846,0.7090810540286444,0.0017799540315401638,0.0017799540315401638,0.3795137111400101,-0.05009424076097422,-1.269572809654654]
     ]
     export default {
-        name: "chord",
+        name: "heatmap",
         props: {
-            matrix: Array,
-            atlas: String,
-            size: Number
-        },
-        mounted() {
-            // this.draw();
-            // const ribbons = this.ribbons
-            // setTimeout(function () {
-            //     emptyMat.forEach((arr,i)=>arr[i+45%emptyMat.length] = 1)
-            //     ribbons.remove()
-            // },5*1000)
-            this.hierarchicalEdge()
-        },
-        watch: {
             // 'matrix': function () {
             //     this.draw();
             // },
@@ -138,160 +118,198 @@
             //     this.draw();
             // }
         },
-        data() {
-            return {
-                chordsize: 1000,
-                label: aal90label,
-                ribbons: null
+        mounted() {
+            this.draw()
+        },
+        watch: {
+            'heatmapData': function () {
+                this.draw();
+            },
+            'atlas': function () {
+                this.draw();
             }
         },
         methods: {
             draw: function () {
-                document.getElementById('chord').innerHTML = ''
-                if (this.chordData === null || this.chordData === '') return;
-                let labelList = this.label;
-                // let matrix = this.matrix;
-                let matrix = emptyMat;
-                // console.log(matrix)
-                // var svg = d3.select(this.$el), // 获取svg元素
-                this.chordsize = matrix.length < 100 ? 1000 : matrix.length * 16;
-                var svg = d3.select("#chord").append('svg')
-                        .attr("id","chord-svg")
-                        .attr("width",this.chordsize)
-                        .attr("height",this.chordsize), // 获取svg元素
-                    width = +svg.attr("width"), // 获取svg元素的宽度
-                    height = +svg.attr("height"), //   获取svg元素的高度
-                    // 计算外半径尺寸，这里取svg画布的宽、高的最小值的一半，减去40，表示两边留有余地；
-                    outerRadius = Math.min(width, height) * 0.5 - 120,
-                    // 计算内半径尺寸
-                    innerRadius = outerRadius - 30;
+            // <path d="M250 150 L150 350 L350 350 Z" />
 
-                // 定义数值的格式化函数
-                var chord = d3.chord()
-                    // 设置弦片段之间的间隔角度，即chord diagram 图中组成外层圆圈的各个弧段之间的角度
-                    .padAngle(0.01)
-                    // 设置数据矩阵matrix 的行内各列的排序顺序为降序排列
-                    .sortSubgroups(d3.descending);
+                // let data = d3.range(10);// (1) 生成一个10元素的数组
+                let size = 100,
+                    minV = -1.7,
+                    maxV = 3.3;
 
-                // 定义一个弧线的布局函数arc()
-                var arc = d3.arc()
-                // 设置弧线的内半径
-                    .innerRadius(innerRadius)
-                    // 设置弧线的外半径
-                    .outerRadius(outerRadius);
-
-                // 定义一个弦布局函数ribbon()
-                var ribbon = d3.ribbon()
-                // 设置弦的半径为弧线的内半径
-                    .radius(innerRadius);
-
-                // 定义一个颜色函数color(),返回离散的颜色值，即四种颜色
-                var color = d3.scaleOrdinal()
-                    .domain(d3.range(4))
-                    .range(['#ff0000','#eb4310','#f6941d','#fbb417','#ffff00','#cdd541','#99cc33','#3f9337','#219167','#239676','#24998d','#1f9baa','#0080ff','#3366cc','#333399','#003366','#800080','#a1488e','#c71585','#bd2158']);
-
-                // 定义一个组元素
-                var g = svg.append("g")
-                    // 将组元素移动到画布的中心处
-                    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-
-                    // chord(matrix)函数用来将matrix数组转换为chord diagram 所需的数据格式，
-                    // 通过datum将转换后用于显示弦图的数据绑定到 g元素上；
-                    .datum(chord(matrix));
-
-                // 定义一组g元素，用来绑定弦图的 groups数据，即弧线
-                var group = g.append("g")
-                    .attr("class", "groups")
-                    .selectAll("g")
-                    .data(function(chords) { return chords.groups; })
-                    .enter().append("g");
-
-                // group元素是用来放置弦图的“弧”的
-                group.append("path")
-                // 设置弧的填充色用color函数来获取
-                    .style("fill", function(d) { return color(d.index); })
-                    // 设置弧的边缘线用比其填充色较深的颜色来画
-                    .style("stroke", function(d) { return d3.rgb(color(d.index)).darker(); })
-                    // 绑定arc布局到group的d属性上，用来画弧
-                    .attr("d", arc);
-                group.append("text")
-                    .attr("x", 8)
-                    .attr("dy", ".35em")
-                    .attr("transform", d => {
-                        let angle = ( d.startAngle + d.endAngle ) / 2;
-                        if ( angle < Math.PI ) return "rotate("+ ( angle * 180 / Math.PI - 90) + ") translate(" + outerRadius + ",0)";
-                        return "rotate("+ ( angle * 180 / Math.PI + 90 ) + ") translate(-" + (outerRadius + 16) + ",0)";
-                    })
-                    .style("text-anchor", d => ( d.startAngle + d.endAngle ) / 2 < Math.PI  ? "start" : "end")
-                    .text(function(d) { return labelList === undefined ? null : labelList[d.index]; });
-            },
-            hierarchicalEdge: function () {
-                function id(node) {
-                    return `${node.parent ? id(node.parent) + "." : ""}${node.data.name}`;
-                }
-                const width = 600
-                const radius = width / 2
-                let line = d3.radialLine()
-                    .curve(d3.curveBundle.beta(0.85))
-                    .radius(d => d.y)
-                    .angle(d => d.x)
-                let tree = d3.cluster()
-                    .size([2 * Math.PI, radius - 100])
-                const data = {name: "", children : []}
-                let altas = ['EWEIGHT','MSRB1','DPM2','CLMP','AACS','RPS11','PNMA1','ITGB2L','MMP2','CD44','ABCA3','RPS17','FAM219A','HAUS2','TMEM216','DPY30','KCNMA1','SMARCD3','4930408F14RIK','ZHX3','FAM187A','TUT1','XDH','GCSH','ERAL1','PFKP','PBX4','ATP5F1','AEN','GFOD2','CLK4','DECR1','CXCR4','SLC25A3','RPS18','SLC10A7','BRIX1','TMSB10','LMAN1','ESYT1','LDB3','CHD8','GALNT3','SUMO1','LRRC6','MSL1','UQCR11','DDB1','RPL19','FAM134B','CCNI','MMP7','CRNKL1','GUCY2G','XAB2','CPXM2','RDH10','RTN1','CENPQ','LRRC71','CHORDC1','MON1B','DTNBP1','DDX5','MLF1IP','ATP5G2','CCNB1','ZEB1','CDK14','EFCAB9','TMX4','SOD2','MIER1','CCDC97','CHD9','CCDC28B','KCNK3','EPN2','AQP9','PDE1C','XK','CAPNS2','TOB2','LYAR','INIP','PDLIM2','GSTCD','MAP3K3','COPS7A','MAX','RNF185','SERPINA12','NR4A2','PRSS51','LRRN1','TMEM174','PIR','IGSF3','PPCS','SRPK1']
-                altas.forEach((v,i)=>data.children.push({name:v, id: i}))
-                const root = tree(d3.hierarchy(data)
-                    .sort((a, b) => (a.data.id - b.data.id) || a.data.name.localeCompare(b.data.name)));
-                const map = new Map(root.leaves().map(d => [id(d), d]));
-                document.getElementById("chord").width = width
-                document.getElementById("chord").height = width - 40
-                const context = document.getElementById("chord").getContext("2d")
-                context.canvas.style.display = "block";
-                context.canvas.style.maxWidth = "100%";
-                context.canvas.style.margin = "auto";
-                context.translate(width / 2, width / 2);
-                line.context(context);
-
-                for (const leaf of root.leaves()) {
-                    context.save();
-                    context.rotate(leaf.x - Math.PI / 2);
-                    context.translate(leaf.y, 0);
-                    if (leaf.x >= Math.PI) {
-                        context.textAlign = "right";
-                        context.rotate(Math.PI);
-                        context.translate(-3, 0);
-                    } else {
-                        context.textAlign = "left";
-                        context.translate(3, 0);
-                    }
-                    context.fillText(leaf.data.name, 0, 3);
-                    context.restore();
-                }
-
-                let test = {}
-                context.globalCompositeOperation = "multiply";
                 let a = d3.rgb(0,0,255),	//蓝色
                     b = d3.rgb(255,0,0);	//红色
-                let color = d3.interpolateHslLong(a,b),
-                    colorScale = d3.scaleLinear().domain([-1.7, 3.3]).range([0, 1]);
-                // context.strokeStyle = "lightsteelblue";
+                let color = d3.interpolateHslLong(a,b);
+                let w = 800,
+                    h = 800,
+                    p = 50,//内边距
+                    x = d3.scaleLinear().domain([0, size]).range([p, w - p]), //(2) 定义x和y比例尺
+                    y = d3.scaleLinear().domain([0, size]).range([h - p, p]),
+                    colorScale = d3.scaleLinear().domain([minV, maxV]).range([0, 1]);
 
-                const leaves = root.leaves()
-                for(let i = 0; i < emptyMat.length;i++){
-                    let row = emptyMat[i]
-                    for (let j = 0; j < row.length;j++) {
-                        // if (row[j] <= 1.8) continue;
-                        if (row[j] <= 3.3-1) continue;
-                        // if (row[j] > 3.3-1||row[j] <= 3.3-2) continue;
-                        // if (row[j] > 3.3-2||row[j] <= 3.3-3) continue;
-                        // if (row[j] > 3.3-3||row[j] <= 3.3-4) continue;
-                        // if (row[j] > 3.3-4) continue;
-                        context.strokeStyle = d3.rgb(color(colorScale(row[j]))).brighter()
-                        context.beginPath();
-                        line(leaves[i].path(map.get("." + altas[j])));
-                        context.stroke();
-                    }
+//(3) 绘制SVG
+                let svg = d3.select("#heatmap").append("svg")
+                    .attr("id", "heatmap-svg")
+                    .attr("width", w+110)
+                    .attr("height", h);
+
+
+                // let border = svg.append("g");
+                // border.append("path")
+                //     .style("stroke","#000")
+                //     .attr('d','M '+ p + ' ' + p + ' ' +
+                //         'L '+ (w - p + 1) + ' ' + p + ' ' +
+                //         'L '+ (w - p + 1) + ' ' + (h - p - 1) + ' ' +
+                //         'L '+ p + ' ' + (h - p - 1) + ' Z')
+                //     .style("fill", color(colorScale(0)));
+                // //(4) 给SVG添加分组，并设置样式类，样式见<style>标签中的设置
+                let grid = svg.append("g");
+                grid.selectAll(".grid")
+                    .attr("class", "grid")
+                    .data(d3.range(0, size*size, 1))
+                    .enter().append("path")
+                    .style("stroke-opacity",0.67)
+                    .style("stroke","#fff")
+                    .attr('d',function (i) {
+                        return 'M '+ x(i % size) + ' ' + y(Math.floor(i / size)) + ' ' +
+                            'L '+ x(i % size + 1) + ' ' + y(Math.floor(i / size)) + ' ' +
+                            'L '+ x(i % size + 1) + ' ' + y(Math.floor(i / size + 1)) + ' ' +
+                            'L '+ x(i % size) + ' ' + y(Math.floor(i / size + 1)) + ' Z';
+                    })
+                    .style("fill", function(i) { return color(colorScale(emptyMat[i % size][Math.floor(i / size)])); })
+                let altas = ['EWEIGHT','MSRB1','DPM2','CLMP','AACS','RPS11','PNMA1','ITGB2L','MMP2','CD44','ABCA3','RPS17','FAM219A','HAUS2','TMEM216','DPY30','KCNMA1','SMARCD3','4930408F14RIK','ZHX3','FAM187A','TUT1','XDH','GCSH','ERAL1','PFKP','PBX4','ATP5F1','AEN','GFOD2','CLK4','DECR1','CXCR4','SLC25A3','RPS18','SLC10A7','BRIX1','TMSB10','LMAN1','ESYT1','LDB3','CHD8','GALNT3','SUMO1','LRRC6','MSL1','UQCR11','DDB1','RPL19','FAM134B','CCNI','MMP7','CRNKL1','GUCY2G','XAB2','CPXM2','RDH10','RTN1','CENPQ','LRRC71','CHORDC1','MON1B','DTNBP1','DDX5','MLF1IP','ATP5G2','CCNB1','ZEB1','CDK14','EFCAB9','TMX4','SOD2','MIER1','CCDC97','CHD9','CCDC28B','KCNK3','EPN2','AQP9','PDE1C','XK','CAPNS2','TOB2','LYAR','INIP','PDLIM2','GSTCD','MAP3K3','COPS7A','MAX','RNF185','SERPINA12','NR4A2','PRSS51','LRRN1','TMEM174','PIR','IGSF3','PPCS','SRPK1']
+                //添加图谱
+                let aix_h = svg.append("g")
+                    // 将组元素移动到画布的坐标原点处
+                    .attr("transform", "translate(0,"+(h-p)+")")
+                let aix_v = svg.append("g")
+                    .attr("transform", "translate("+p+",0)")
+                aix_h.selectAll("text")
+                    .data(d3.range(0, size, 1))
+                    .enter().append("text")
+                    .attr("class","labelText")
+                    .attr("y", y)
+                    .attr("transform", d => {
+                        return "rotate(-90)"
+                    })
+                    .style("text-anchor", "end")
+                    .style("font-size", "0.5rem")
+                    .text(function(d){
+                        return altas[size-d-1];
+                    });
+                aix_v.selectAll("text")
+                    .data(d3.range(0, size, 1))
+                    .enter().append("text")
+                    .attr("class","labelText")
+                    .attr("y", y)
+                    .style("text-anchor", "end")
+                    .style("font-size", "0.5rem")
+                    .text(function(d){
+                        return altas[d];
+                    });
+                //定义一个线性渐变
+                let defs = svg.append("defs");
+
+                let linearGradient = defs.append("linearGradient")
+                    .attr("id","linearColor")
+                    .attr("x1","0%")
+                    .attr("y1","100%")
+                    .attr("x2","0%")
+                    .attr("y2","0%");
+
+                let stop = linearGradient
+                    .selectAll("stop")
+                    .data([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+                    .enter().append("stop")
+                    .attr("offset",a => a + '%')
+                    .style("stop-color",a => color(a/100.0).toString());
+                //添加一个矩形，并应用线性渐变
+                let colorRect = svg.append("rect")
+                    .attr("x", w)
+                    .attr("y", p)
+                    .attr("width", 30)
+                    .attr("height", h - p - p - 1)
+                    .style("fill","url(#" + linearGradient.attr("id") + ")");
+                //添加文字
+                svg.append("text")
+                    .attr("class","valueText")
+                    .attr("x", w + 30)
+                    .attr("y", h - p)
+                    .attr("dy", "-0.3em")
+                    .text(function(){
+                        return '_';
+                    });
+
+                svg.append("text")
+                    .attr("class","valueText")
+                    .attr("x", w + 30)
+                    .attr("y", p+2)
+                    .attr("dy", "-0.3em")
+                    .text(function(){
+                        return '_';
+                    });
+
+                // min value text
+                svg.append("text")
+                    .attr("class","valueText")
+                    .attr("x", w + 40)
+                    .attr("y", h - p + 8)
+                    .attr("dy", "-0.3em")
+                    .text(function(){
+                        return minV;
+                    });
+
+                // max value text
+
+                svg.append("text")
+                    .attr("class","valueText")
+                    .attr("x", w + 40)
+                    .attr("y", p + 9)
+                    .attr("dy", "-0.3em")
+                    .text(function(){
+                        return maxV;
+                    });
+                if (maxV*minV<0) {
+                    let pmap = d3.scaleLinear().domain([minV, maxV]).range([h-p, p])
+                    svg.append("text")
+                        .attr("class", "valueText")
+                        .attr("x", w + 30)
+                        .attr("y", pmap(0))
+                        .attr("dy", "-0.3em")
+                        .text(function () {
+                            return '_';
+                        });
+                    svg.append("text")
+                        .attr("class", "valueText")
+                        .attr("x", w + 40)
+                        .attr("y", pmap(0)+9)
+                        .attr("dy", "-0.3em")
+                        .text(function () {
+                            return 0;
+                        });
+                    console.log(p, h - p, parseInt((p * maxV + (h - p) * minV) / (maxV - minV)))
                 }
+                this.transformSvg(document.getElementById('heatmap-svg'));
+            },
+            transformSvg: function (svgEl) {
+                let svgString = new XMLSerializer().serializeToString(svgEl);
+                let preface = '<?xml version="1.0" standalone="no"?>\r\n';
+                let svg = new Blob([ preface, svgString], {type: "image/svg+xml;charset=utf-8"});
+                let canvas = document.createElement("canvas");
+                canvas.width = 910;
+                canvas.height = 800;
+                let ctx = canvas.getContext("2d");
+                let img = new Image();
+                let url = URL.createObjectURL(svg);
+                const size = 500;
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    let png = canvas.toDataURL("image/png");
+                    document.getElementById('heatmap').innerHTML = '<img src="'+png+'" width="'+(size*1.20)+'" height="'+size+'"/>';
+                    URL.revokeObjectURL(png);
+                };
+                img.src = url;
             }
         }
     }

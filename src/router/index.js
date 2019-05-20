@@ -3,6 +3,10 @@ import Router from 'vue-router'
 
 // const view = () => import('@/layout/view')
 // index
+/**
+ * 使用懒加载
+ * @returns {Promise<*>|*}
+ */
 const index = () => import('@/page/index/index')
 const home = () => import('@/page/index/children/home/home')
 const bnViewer = () => import('@/page/index/children/brainNetViewer/View')
@@ -10,7 +14,7 @@ const brainSide = () => import('@/page/index/children/brainNetViewer/brainNet')
 const gretna = () => import('@/page/index/children/gretna/gretna')
 const fmri = () => import('@/page/index/children/fmri/fmri')
 const smri = () => import('@/page/index/children/smri/smri')
-// const ftsys = () => import('@/page/index/children/ftsys/ftsys')
+const dti = () => import('@/page/index/children/dti')
 // login
 const login = () => import('@/page/login/login')
 // Sign Up
@@ -59,6 +63,15 @@ export const sideRoutes = [
         }
     },
     {
+        name: 'dti',
+        path: 'dti',
+        component: dti,
+        meta: {
+            icon: 'iconfont icon-timeSeries'
+            // title: '网络分析'
+        }
+    },
+    {
         name: 'gretna',
         path: 'networkanalysis',
         component: gretna,
@@ -80,11 +93,6 @@ export const sideRoutes = [
             switchon: true
         }
     }
-    // {
-    //     name: 'ftsys',
-    //     path: 'ftsys',
-    //     component: ftsys
-    // }
 ]
 
 export default new Router({

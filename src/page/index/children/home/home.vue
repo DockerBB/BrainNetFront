@@ -146,6 +146,69 @@
                 </el-table-column>
             </el-table>
         </el-card>
+        <el-card style="width: 50%;float: left;">
+            <div slot="header" class="clearfix">
+                <h2>sMRI Preprocess Result</h2>
+            </div>
+            <el-row>
+                <el-input
+                        style="width: 50%"
+                        placeholder="Search By File Name"
+                        prefix-icon="el-icon-search"
+                        v-model="smriTaskSearch"></el-input>
+                <el-button style="float: right;" size="mini" type="primary" @click="showsmriData">Show Data</el-button>
+            </el-row>
+            <el-table
+                    :data="smriTableDataList"
+                    style="width: 100%"
+                    type="selection"
+                    max-height="280"
+                    :default-sort = "{prop: 'name', order: 'ascending'}">
+                <el-table-column
+                        label="Preprocess Task Name"
+                        prop="name">
+                </el-table-column>
+                <el-table-column
+                        label="Preprocess Result">
+                    <template slot-scope="scope">
+                        {{scope.row.workingzip}}
+                    </template>
+                </el-table-column>
+                <el-table-column align="right">
+                    <template slot-scope="scope">
+                        <el-popover
+                                :hidden="!scope.row.done"
+                                placement="right"
+                                title="Select sMRI Result Attribute"
+                                width="400"
+                                trigger="click">
+                            <el-checkbox-group v-model="selectsMRIResultAttr" style="margin-right: 20px">
+                                <el-checkbox label="label"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="mri"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="scripts"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="stats"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="surf"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="tmp"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="touch"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="trash"></el-checkbox>
+                            </el-checkbox-group>
+                            <el-button type="primary" style="float: right;" @click="downloadsMRIResult(scope.row)">Download</el-button>
+                            <el-button
+                                    slot="reference"
+                                    size="mini"
+                                    type="primary">View Result</el-button>
+                        </el-popover>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-card>
         <el-dialog title="Network Viewer" :visible.sync="dialogTableVisible">
             <el-checkbox-group v-model="checkboxGroup">
                 <el-checkbox-button label="Chord Graph"></el-checkbox-button>
@@ -218,9 +281,12 @@
                 dialogTableVisible: false,
                 resultDialogVisible: false,
                 fmriDataVisible: false,
+                smriDataVisible: false,
                 search: '',
                 selectfMRIResultAttr: [],
+                selectsMRIResultAttr: [],
                 fmriTaskSearch: '',
+                smriTaskSearch: '',
                 historyResult: [],
                 checkboxGroup: [],
                 atlasData: [],
@@ -241,9 +307,12 @@
                 downloadName: '',
                 fileList: [],
                 fmriTaskList: [],
+                smriTaskList: [],
                 tableDataList: [],
                 fmriTableDataList: [],
+                smriTableDataList: [],
                 fmriData: [],
+                smriData: [],
                 logtextarea: '',
                 selectFiles: [],
                 netAnalysisTaskname: '',
@@ -278,6 +347,9 @@
             },
             'fmriTaskSearch': function () {
                 this.updateTableDataList()
+            },
+            'smriTaskSearch': function () {
+                this.updateTableDataList()
             }
         },
         mounted() {
@@ -289,6 +361,7 @@
                 this.netAnalysisTaskname = taskList.length === 0? 'default':taskList[0].value
             })
             this.loadfmriTask();
+            this.loadsmriTask();
         },
         methods: {
             getURI: function(node) {
@@ -467,6 +540,22 @@
                     this.updateTableDataList()
                 })
             },
+            loadsmriTask:function(){
+                this.smriTaskList = []
+                this.$axios.get('/getdirlist/smri').then(res => {
+                    let taskList = []
+                    res.data.data.forEach(v=>taskList.push('/smri/'+v.name+'/working.zip'))
+                    this.smriTaskList = res.data.data
+                    return this.$axios.post('/find',taskList)
+                }).then(res=>{
+                    const data = res.data.data
+                    for (let i = 0;i < data.length;i++){
+                        this.smriTaskList[i].done = data[i].match(/-find\s(.+)/)[1] === 'success'
+                        if (this.smriTaskList[i].done) this.smriTaskList[i].workingzip = this.smriTaskList[i].name+'_working.zip'
+                    }
+                    this.updateTableDataList()
+                })
+            },
             handleUpload:function(content){
                 let param = new FormData()
                 param.append('uploadfile',content.file, encodeURIComponent('FCMatrixR/'+content.file.name))
@@ -514,6 +603,29 @@
                     link.click()
                 })
             },
+            downloadsMRIResult(item){
+                let taskname = item.name;
+                let root = '/smri/'+taskname+'/working';
+                // let form = document.getElementById('forpostdownload');//定义一个form表单
+                // form.target = 'if_down'
+                // form.method = 'post';
+                // form.action = 'http:'+window.g.API_URL+'/MyFile';
+                console.log('downloadsMRIResult')
+                this.$axios.get('/getdirlist'+root).then(res=>{
+                    let urilist = []
+                    let attr = this.selectsMRIResultAttr
+                    res.data.data.forEach(v=>{
+                        for (let i in attr) urilist.push(root+'/'+v.name+'/'+attr[i])
+                    })
+                    if (urilist.length === 0) return Promise.reject();
+                    else return this.$axios.post('/MyFile',urilist)
+                }).then(()=>{
+                    let link = document.createElement('a')
+                    link.href = 'http:' + window.g.API_URL + '/downloadzip'
+                    link.download = taskname+'-working.zip'
+                    link.click()
+                })
+            },
             querySearch(queryString, cb) {
                 let restaurants = this.netAnalysisTaskList;
                 // let results = queryString ? restaurants.filter(data => !queryString || data.value.toLowerCase().includes(queryString.toLowerCase())) : restaurants;
@@ -524,6 +636,7 @@
             updateTableDataList() {
                 this.tableDataList = []
                 this.fmriTableDataList = []
+                this.smriTableDataList = []
                 this.fileList
                     .filter(data => !this.search || data.name.toLowerCase().includes(this.search.toLowerCase()))
                     .forEach(v=>this.tableDataList.push(v))
@@ -531,6 +644,10 @@
                     .filter(data => !this.fmriTaskSearch || data.name.toLowerCase().includes(this.fmriTaskSearch.toLowerCase()))
                     .filter(data => data.done)
                     .forEach(v=>this.fmriTableDataList.push(v))
+                this.smriTaskList
+                    .filter(data => !this.smriTaskSearch || data.name.toLowerCase().includes(this.smriTaskSearch.toLowerCase()))
+                    .filter(data => data.done)
+                    .forEach(v=>this.smriTableDataList.push(v))
             },
             showfmriData() {
                 this.fmriDataVisible = true
@@ -548,6 +665,22 @@
                 const self = this
                 setTimeout(()=>
                     fmriData.sort((a,b)=>a.label < b.label ? 1 : -1),1000)
+            },
+            showsmriData() {
+                this.smriDataVisible = true
+                let smriData = []
+                this.smriData = smriData
+                this.smriTaskList.forEach((v,i)=>{
+                    let taskname = v.name
+                    this.$axios.get('/getdirlist/smri/'+taskname+'/data').then(res=>{
+                        let children = []
+                        res.data.data.forEach(v=>children.push({label:v.name}))
+                        smriData.push({label:taskname,children:children})
+                    })
+                })
+                const self = this
+                setTimeout(()=>
+                    smriData.sort((a,b)=>a.label < b.label ? 1 : -1),1000)
             }
         }
     }

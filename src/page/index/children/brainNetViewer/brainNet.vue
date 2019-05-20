@@ -75,10 +75,16 @@
             <br/>
             <el-popover
                     placement="right"
-                    width="300"
-                    trigger="hover">
-                <img v-if="bnOption.NIFTIModel" :src="bnOption.NIFTIModel.z_slice[numOfslice]" width="240px" height="330"/>
-                <el-slider v-model="numOfslice" :max="180"></el-slider>
+                    width="350"
+                    trigger="click">
+                <div v-if="bnOption.NIFTIModel" style="width: 320px;" v-loading="niftizoomflag">
+                    <el-row type="flex">
+                        <img @click="imgClickEvent('z', $event)" style="display: block;background-color: black" :src="bnOption.NIFTIModel.z_img" width="160" height="220"/>
+                        <img @click="imgClickEvent('x', $event)" style="display: block;background-color: black" :src="bnOption.NIFTIModel.x_img" width="160" height="220"/>
+                    </el-row>
+                    <img @click="imgClickEvent('y', $event)" style="display: block;background-color: black" :src="bnOption.NIFTIModel.y_img" width="160" height="160"/>
+                </div>
+                <el-slider style="float: bottom" v-model="numOfslice" :max="180"></el-slider>
                 <el-button slot="reference" type="text">{{ translations('niftiAttr') }}</el-button>
             </el-popover>
         </div>
@@ -98,8 +104,9 @@
                 <el-button @click="dialogTableVisible = false">{{$t('el.messagebox.cancel')}}</el-button>
             </span>
         </el-dialog>
-        <!--<el-dialog title="Connection Chord" :visible.sync="chordVisible" :modal-append-to-body="false">-->
-            <!--<chord :matrix="chordData" :atlas="atlasSelect" :size="500"></chord>-->
+        <!--<el-dialog title="Connection Chord" custom-class="connection" :visible.sync="chordVisible" :modal-append-to-body="false">-->
+            <!--<chord></chord>-->
+            <!--&lt;!&ndash;<heatmap></heatmap>&ndash;&gt;-->
         <!--</el-dialog>-->
     </div>
 </template>
@@ -107,6 +114,7 @@
     /* eslint-disable */
     import { NIFTILoader } from '@/utils/NIFTILoader'
     import chord from './chord'
+    import heatmap from './heatmap'
     import { surfIndex, nodeIndex, edgeIndex, niftiIndex } from '../data-index'
     import i18nLang from './i18n-lang'
     const keyName = 'brainViewer'
@@ -141,11 +149,12 @@
           niftiLabel: null,
           atlasSelect: 'aal',
           chordData: [],
-          chordVisible: true,
-          bnOption: this.$store.state.bnOption
+          // chordVisible: true,
+          bnOption: this.$store.state.bnOption,
+          niftizoomflag: false
       }
     },
-    components: {chord},
+    components: {chord,heatmap},
     methods: {
         init: function() {
           // document.getElementById('menuItem').style.display = 'none';
@@ -158,11 +167,12 @@
                   'Accept': 'application/octet-stream',
                   'content-type': 'application/octet-stream'
               },
-              method: 'GET'
+              method: 'GET',
+              credentials: 'include'
           }).then(data => data.arrayBuffer()).then(data => {
               if (data) {
                   delete self.bnOption.NIFTIModel;
-                  var loader = self.bnOption.NIFTIModel = new NIFTILoader();
+                  let loader = self.bnOption.NIFTIModel = new NIFTILoader();
                   loader.load(data);
                   self.bnOption.sflag = true;
               }
@@ -178,7 +188,7 @@
         },
         localfileinput: function(){
           let self = this;
-          var input = document.createElement('input');
+          let input = document.createElement('input');
           input.type = 'file';
           input.onchange = function(ev) {
               const file = ev.target.files[0];
@@ -200,14 +210,14 @@
           } else if (this.fileType === 'edge') {
               input.accept = '.edge';
           } else if (this.fileType === 'nifti') {
-              input.accept = '.nii';
+              input.accept = '.nii,.nii.gz';
               input.onchange = function(ev) {
                   delete self.bnOption.NIFTIModel;
-                  var loader = self.bnOption.NIFTIModel = new NIFTILoader();
+                  let loader = self.bnOption.NIFTIModel = new NIFTILoader();
                   const file = ev.target.files[0];
-                  var reader = new FileReader();
+                  let reader = new FileReader();
                   reader.onload = function (e) {
-                      var buffer = reader.result;
+                      let buffer = reader.result;
                       loader.load(buffer);
                       self.bnOption.sflag = true;
                   };
@@ -243,6 +253,36 @@
             this.bnOption.allMaterial.lineMaterial.lineWidth = null
             this.bnOption.allMaterial.lineMaterial.lineWidth = lineWidth
             // this.$set(lineWidth, 0, 0.5)
+        },
+        imgClickEvent(tag, event){
+            const nifti = this.bnOption.NIFTIModel
+            let cols = nifti.niftiHeader.dims[1];
+            let rows = nifti.niftiHeader.dims[2];
+            let slices = nifti.niftiHeader.dims[3];
+            let offsetX = event.offsetX;
+            let offsetY = event.offsetY;
+            switch (tag){
+                case 'x':
+                    nifti.py = offsetY / 220 * rows;
+                    nifti.pz = offsetX / 160 * slices;
+                    break;
+                case 'y':
+                    nifti.px = offsetX / 160 * cols;
+                    nifti.pz = (160 - offsetY) / 160 * slices;
+                    break;
+                case 'z':
+                    nifti.px = offsetX / 160 * cols;
+                    nifti.py = offsetY / 220 * rows;
+                    break;
+                default: break;
+            }
+            nifti.px = parseInt(nifti.px)
+            nifti.py = parseInt(nifti.py)
+            nifti.pz = parseInt(nifti.pz)
+            nifti.drawAuxiliary()
+            this.numOfslice++
+            this.niftizoomflag = true
+            setTimeout(()=>this.niftizoomflag = false, 100)
         }
     },
     created() {
@@ -294,4 +334,7 @@
         font-size: 14px;
         padding-right: 8px;
     }
+    /*.connection{*/
+        /*width: 80%;*/
+    /*}*/
 </style>

@@ -56,9 +56,9 @@ Object.assign( EdgeLoader.prototype ,{
           if (row[0] != '#' && row[0]) {
               let mrow = []
               row.split(/\s+|,/g).forEach(function (cell, j) {
-                  if (cell !== '') mrow.push(parseFloat(cell));
+                  if (/^[\+|\-]?[\d]+\.?[\d|\-|e]*/.test(cell)) mrow.push(parseFloat(cell));
               });
-              matrix[i] = mrow;
+              if (mrow.length > 0) matrix[i] = mrow;
               i++;
           }
       });
@@ -71,7 +71,7 @@ Object.assign( EdgeLoader.prototype ,{
           min = 100;
       data.split(/\n/g).forEach(function(row){
           if (row[0] != '#' && row[0]) {
-              row.split(/\s|,/g).filter(v=>v !== '').forEach(function (cell, j) {
+              row.split(/\s|,/g).filter(v=>v !== '').forEach(function (cell, j) {z
                   if (parseFloat(cell) !== 0.0){
                       vf = parseFloat(cell);
                       list.push([i, j, vf]);

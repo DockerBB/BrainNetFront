@@ -169,7 +169,7 @@
                 });
             },
             verifyMail() {
-                if(this.isOvertime){
+                if(!/@/.test(this.form.email)||this.isOvertime){
                     return false;
                 }
                 this.$axios.get('/verifyMail?email='+encodeURIComponent(this.form.email))

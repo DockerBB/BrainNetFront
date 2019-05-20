@@ -1,6 +1,6 @@
 <template>
     <vue-position-sticky sticky-class="sticky-class">
-        <el-aside id="side" width="180px">
+        <el-aside id="side" width="190px">
             <!-- menu -->
             <el-menu id="menuItem" :default-active="$route.name" :default-openeds="defaultOpeneds" background-color="#304156" text-color="#bfcbd9" active-text-color="#42b983">
                 <my-side-item :json="filterRoutes"></my-side-item>
@@ -58,6 +58,7 @@ export default {
     flex-direction: column;
     height: 100%;
     user-select: none;
+    overflow-x: hidden;
     .el-menu {
         flex-grow: 1;
         padding-bottom: 15px;

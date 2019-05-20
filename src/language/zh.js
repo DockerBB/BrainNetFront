@@ -9,6 +9,7 @@ export default {
         gretna: '复杂网络分析',
         fmri: '时间序列分析',
         smri: '时间序列分析(sMRI)',
+        dti: '弥散张量成像',
         permission: '权限测试'
     },
     login: {

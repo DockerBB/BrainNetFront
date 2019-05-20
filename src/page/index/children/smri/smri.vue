@@ -26,6 +26,8 @@
         </el-dialog>
         <div style="text-align: center">
             <el-button type="primary" style="margin: 10px auto 0 auto;font-size: 1.5rem" @click="onSubmit">run</el-button>
+            &nbsp;&nbsp;&nbsp;
+            <el-button type="primary" style="margin: 10px auto 0 auto;font-size: 1.5rem" @click="onSubmitParallel">run parallel</el-button>
         </div>
         <!--<el-button type="primary" style="float: right" @click="downloadResult">download</el-button>-->
     </div>
@@ -89,6 +91,19 @@
                         parameterList['smri'] = 'json'
                         // console.log(parameterList)
                         this.$axios.post('/smri/'+this.taskname+'/'+cache.getToken(), {jsonstr:JSON.stringify(parameterList)})
+                            .then(res => this.$message({message: res.data.message, type: 'info'}))
+                    }).catch(()=>this.$message({message: 'you have no upload data yet', type: 'info'}))
+            },
+            onSubmitParallel: function () {
+                this.$axios.post('/find',['/smri/'+this.taskname+'/data'])
+                    .then(res=>{
+                        if(res.data.data[0].match(/-find\s(.+)/)[1] === 'success') return Promise.resolve();
+                        else return Promise.reject()
+                    }).then(() => {
+                        let parameterList = {}
+                        parameterList['smri'] = 'json'
+                        // console.log(parameterList)
+                        this.$axios.post('/smriParallel/'+this.taskname+'/'+cache.getToken(), {jsonstr:JSON.stringify(parameterList)})
                             .then(res => this.$message({message: res.data.message, type: 'info'}))
                     }).catch(()=>this.$message({message: 'you have no upload data yet', type: 'info'}))
             },
