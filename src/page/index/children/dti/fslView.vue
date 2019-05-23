@@ -1,12 +1,14 @@
 <template>
-    <div v-loading="isLoading">
+    <div style="width: 280px" v-loading="isLoading">
+        <el-col type="flex" justify="center" align="center">
+            X:<el-input v-model="axisX" style="width: 60px" readonly></el-input>
+            Y:<el-input v-model="axisY" style="width: 60px" readonly></el-input>
+            Z:<el-input v-model="axisZ" style="width: 60px" readonly></el-input>
+        </el-col>
         <canvas id="fslpanel"  width="280" height="420" style="background-color: black"
                 @mousedown="handleMouseDown($event)"
                 @mousemove="handleAxisChange($event)"
                 @mouseup="mouseFlag = true"></canvas>
-        <el-row type="flex">
-            x:{{this.axisX}},y:{{this.axisY}},z:{{this.axisZ}}
-        </el-row>
         <el-row type="flex">
             <el-button @click="importBase">Base</el-button>
             <el-button @click="importSkeleton">Skeleton</el-button>
@@ -76,7 +78,10 @@
                     },
                     method: 'GET',
                     credentials: 'include'
-                }).then(data => data.arrayBuffer()).then(data => {
+                }).then(response => {
+                    if(response.ok) return response.arrayBuffer()
+                    else return Promise.reject('can not find '+baseImageUri)
+                }).then(data => {
                     if (data) {
                         let niftiInfo = self.load(data);
                         self.baseHeader = niftiInfo.niftiHeader;
@@ -91,7 +96,10 @@
                         method: 'GET',
                         credentials: 'include'
                     })
-                }).then(data => data.arrayBuffer()).then(data => {
+                }).then(response => {
+                    if(response.ok) return response.arrayBuffer()
+                    else return Promise.reject('can not find '+skeletonImageUri)
+                }).then(data => {
                     if (data) {
                         let niftiInfo = self.load(data);
                         self.skeletonImage = niftiInfo.niftiImage;
@@ -105,14 +113,27 @@
                         method: 'GET',
                         credentials: 'include'
                     })
-                }).then(data => data.arrayBuffer()).then(data => {
+                }).then(response => {
+                    if(response.ok) return response.arrayBuffer()
+                    else return Promise.reject('can not find '+tbssImageUri)
+                }).then(data => {
                     if (data) {
                         let niftiInfo = self.load(data);
                         self.tbssImage = niftiInfo.niftiImage;
                         self.draw();
                     }
                     self.isLoading = false
-                }).catch(err=>self.$message({message: err, type: 'warning'}))
+                }).catch(err=>{
+                    // self.$message({message: err, type: 'warning'})
+                    const h = self.$createElement
+                    self.$notify({
+                        title: 'Tips: can not get file',
+                        message: err.substring(err.lastIndexOf('/')+1),
+                        type: 'warning',
+                        duration: 0
+                    });
+                    self.isLoading = false
+                })
             },
             draw() {
                 let x = this.axisX, y = this.axisY, z = this.axisZ
@@ -126,8 +147,8 @@
                     b = d3.rgb(255,0,0),	//红色
                     c = d3.rgb(255,255,0);	//黄色
                 let y2rColor = d3.interpolateHslLong(c,b),
-                    y2gColor = d3.interpolateHslLong(c,a);
-                let imageData = ctx.createImageData(cols, rows);
+                    y2gColor = d3.interpolateHslLong(c,a);              // 颜色插值
+                let imageData = ctx.createImageData(cols, rows);        // 创建画图区
                 ctx.clearRect(0,0,canvas.width,canvas.height)
                 for (let ctrY = 0; ctrY < rows; ctrY++) {
                     for (let ctrX = 0; ctrX < cols; ctrX++) {

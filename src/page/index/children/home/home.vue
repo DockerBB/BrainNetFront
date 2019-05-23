@@ -209,6 +209,75 @@
                 </el-table-column>
             </el-table>
         </el-card>
+        <el-card style="width: 50%;float: right;">
+            <div slot="header" class="clearfix">
+                <h2>DTI Preprocess Result</h2>
+            </div>
+            <el-row>
+                <el-input
+                        style="width: 50%"
+                        placeholder="Search By File Name"
+                        prefix-icon="el-icon-search"
+                        v-model="dtiTaskSearch"></el-input>
+                <el-button style="float: right;" size="mini" type="primary" @click="showdtiData">Show Data</el-button>
+            </el-row>
+            <el-table
+                    :data="dtiTableDataList"
+                    style="width: 100%"
+                    type="selection"
+                    max-height="280"
+                    :default-sort = "{prop: 'name', order: 'ascending'}">
+                <el-table-column
+                        label="Preprocess Task Name"
+                        prop="name">
+                </el-table-column>
+                <el-table-column
+                        label="Preprocess Result">
+                    <template slot-scope="scope">
+                        {{scope.row.workingzip}}
+                    </template>
+                </el-table-column>
+                <el-table-column align="right">
+                    <template slot-scope="scope">
+                        <el-popover
+                                :hidden="!scope.row.done"
+                                placement="right"
+                                title="Select DTI Result Attribute"
+                                width="400"
+                                trigger="click">
+                            <el-checkbox-group v-model="selectDTIResultAttr" style="margin-right: 20px">
+                                <el-checkbox label="AllAtlasResults"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="TBSS"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="ants_normalize_DTI"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="atlas_statistics"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="B0"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="B0_tmp"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="calc_DTI_native"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="EddyCurrentCorrection"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="erode_DTI_native"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="GradientCorrection"></el-checkbox>
+                                <br/>
+                                <el-checkbox label="trackvis"></el-checkbox>
+                            </el-checkbox-group>
+                            <el-button type="primary" style="float: right;" @click="downloaddtiResult(scope.row)">Download</el-button>
+                            <el-button
+                                    slot="reference"
+                                    size="mini"
+                                    type="primary">View Result</el-button>
+                        </el-popover>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-card>
         <el-dialog title="Network Viewer" :visible.sync="dialogTableVisible">
             <el-checkbox-group v-model="checkboxGroup">
                 <el-checkbox-button label="Chord Graph"></el-checkbox-button>
@@ -282,11 +351,14 @@
                 resultDialogVisible: false,
                 fmriDataVisible: false,
                 smriDataVisible: false,
+                dtiDataVisible: false,
                 search: '',
                 selectfMRIResultAttr: [],
                 selectsMRIResultAttr: [],
+                selectDTIResultAttr: [],
                 fmriTaskSearch: '',
                 smriTaskSearch: '',
+                dtiTaskSearch: '',
                 historyResult: [],
                 checkboxGroup: [],
                 atlasData: [],
@@ -306,13 +378,16 @@
                 downloadUrl: '',
                 downloadName: '',
                 fileList: [],
+                tableDataList: [],
                 fmriTaskList: [],
                 smriTaskList: [],
-                tableDataList: [],
+                dtiTaskList: [],
                 fmriTableDataList: [],
                 smriTableDataList: [],
+                dtiTableDataList: [],
                 fmriData: [],
                 smriData: [],
+                dtiData: [],
                 logtextarea: '',
                 selectFiles: [],
                 netAnalysisTaskname: '',
@@ -350,6 +425,9 @@
             },
             'smriTaskSearch': function () {
                 this.updateTableDataList()
+            },
+            'dtiTaskSearch': function () {
+                this.updateTableDataList()
             }
         },
         mounted() {
@@ -362,6 +440,7 @@
             })
             this.loadfmriTask();
             this.loadsmriTask();
+            this.loaddtiTask();
         },
         methods: {
             getURI: function(node) {
@@ -524,6 +603,34 @@
                     this.updateTableDataList()
                 }).catch(()=>this.updateTableDataList())
             },
+            querySearch(queryString, cb) {
+                let restaurants = this.netAnalysisTaskList;
+                // let results = queryString ? restaurants.filter(data => !queryString || data.value.toLowerCase().includes(queryString.toLowerCase())) : restaurants;
+                // // 调用 callback 返回建议列表的数据
+                // cb(results);
+                cb(restaurants)
+            },
+            updateTableDataList() {
+                this.tableDataList = []
+                this.fmriTableDataList = []
+                this.smriTableDataList = []
+                this.dtiTableDataList = []
+                this.fileList
+                    .filter(data => !this.search || data.name.toLowerCase().includes(this.search.toLowerCase()))
+                    .forEach(v=>this.tableDataList.push(v))
+                this.fmriTaskList
+                    .filter(data => !this.fmriTaskSearch || data.name.toLowerCase().includes(this.fmriTaskSearch.toLowerCase()))
+                    .filter(data => data.done)
+                    .forEach(v=>this.fmriTableDataList.push(v))
+                this.smriTaskList
+                    .filter(data => !this.smriTaskSearch || data.name.toLowerCase().includes(this.smriTaskSearch.toLowerCase()))
+                    .filter(data => data.done)
+                    .forEach(v=>this.smriTableDataList.push(v))
+                this.dtiTaskList
+                    .filter(data => !this.dtiTaskSearch || data.name.toLowerCase().includes(this.dtiTaskSearch.toLowerCase()))
+                    .filter(data => data.done)
+                    .forEach(v=>this.dtiTableDataList.push(v))
+            },
             loadfmriTask:function(){
                 this.fmriTaskList = []
                 this.$axios.get('/getdirlist/fmri').then(res => {
@@ -552,6 +659,22 @@
                     for (let i = 0;i < data.length;i++){
                         this.smriTaskList[i].done = data[i].match(/-find\s(.+)/)[1] === 'success'
                         if (this.smriTaskList[i].done) this.smriTaskList[i].workingzip = this.smriTaskList[i].name+'_working.zip'
+                    }
+                    this.updateTableDataList()
+                })
+            },
+            loaddtiTask:function(){
+                this.dtiTaskList = []
+                this.$axios.get('/getdirlist/dti').then(res => {
+                    let taskList = []
+                    res.data.data.forEach(v=>taskList.push('/dti/'+v.name+'/working_dwi.zip'))
+                    this.dtiTaskList = res.data.data
+                    return this.$axios.post('/find',taskList)
+                }).then(res=>{
+                    const data = res.data.data
+                    for (let i = 0;i < data.length;i++){
+                        this.dtiTaskList[i].done = data[i].match(/-find\s(.+)/)[1] === 'success'
+                        if (this.dtiTaskList[i].done) this.dtiTaskList[i].workingzip = this.dtiTaskList[i].name+'_working.zip'
                     }
                     this.updateTableDataList()
                 })
@@ -626,28 +749,31 @@
                     link.click()
                 })
             },
-            querySearch(queryString, cb) {
-                let restaurants = this.netAnalysisTaskList;
-                // let results = queryString ? restaurants.filter(data => !queryString || data.value.toLowerCase().includes(queryString.toLowerCase())) : restaurants;
-                // // 调用 callback 返回建议列表的数据
-                // cb(results);
-                cb(restaurants)
-            },
-            updateTableDataList() {
-                this.tableDataList = []
-                this.fmriTableDataList = []
-                this.smriTableDataList = []
-                this.fileList
-                    .filter(data => !this.search || data.name.toLowerCase().includes(this.search.toLowerCase()))
-                    .forEach(v=>this.tableDataList.push(v))
-                this.fmriTaskList
-                    .filter(data => !this.fmriTaskSearch || data.name.toLowerCase().includes(this.fmriTaskSearch.toLowerCase()))
-                    .filter(data => data.done)
-                    .forEach(v=>this.fmriTableDataList.push(v))
-                this.smriTaskList
-                    .filter(data => !this.smriTaskSearch || data.name.toLowerCase().includes(this.smriTaskSearch.toLowerCase()))
-                    .filter(data => data.done)
-                    .forEach(v=>this.smriTableDataList.push(v))
+            downloaddtiResult(item){
+                let taskname = item.name;
+                let root = '/dti/'+taskname+'/working_dwi';
+                // let form = document.getElementById('forpostdownload');//定义一个form表单
+                // form.target = 'if_down'
+                // form.method = 'post';
+                // form.action = 'http:'+window.g.API_URL+'/MyFile';
+                console.log('downloaddtiResult')
+                this.$axios.get('/getdirlist'+root).then(res=>{
+                    let urilist = []
+                    let attr = this.selectDTIResultAttr.filter(v=>['AllAtlasResults','TBSS'].indexOf(v)===-1)
+                    let temp = this.selectDTIResultAttr.filter(v=>['AllAtlasResults','TBSS'].indexOf(v)>-1)
+                    res.data.data.forEach(v=>{
+                        if (v.name === 'AllAtlasResults'&&temp.indexOf('AllAtlasResults')>-1) urilist.push(root+'/AllAtlasResults/')
+                        else if (v.name === 'TBSS'&&temp.indexOf('TBSS')>-1) urilist.push(root+'/TBSS/')
+                        else if (['AllAtlasResults','TBSS'].indexOf(v.name)===-1) for (let i in attr) urilist.push(root+'/'+v.name+'/'+attr[i])
+                    })
+                    if (urilist.length === 0) return Promise.reject();
+                    else return this.$axios.post('/MyFile',urilist)
+                }).then(()=>{
+                    let link = document.createElement('a')
+                    link.href = 'http:' + window.g.API_URL + '/downloadzip'
+                    link.download = taskname+'-working.zip'
+                    link.click()
+                })
             },
             showfmriData() {
                 this.fmriDataVisible = true
@@ -681,7 +807,23 @@
                 const self = this
                 setTimeout(()=>
                     smriData.sort((a,b)=>a.label < b.label ? 1 : -1),1000)
-            }
+            },
+            showdtiData() {
+                this.dtiDataVisible = true
+                let dtiData = []
+                this.dtiData = dtiData
+                this.dtiTaskList.forEach((v,i)=>{
+                    let taskname = v.name
+                    this.$axios.get('/getdirlist/dti/'+taskname+'/data').then(res=>{
+                        let children = []
+                        res.data.data.forEach(v=>children.push({label:v.name}))
+                        dtiData.push({label:taskname,children:children})
+                    })
+                })
+                const self = this
+                setTimeout(()=>
+                    dtiData.sort((a,b)=>a.label < b.label ? 1 : -1),1000)
+            },
         }
     }
 </script>

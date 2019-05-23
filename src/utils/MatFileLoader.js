@@ -1,6 +1,4 @@
 /* eslint-disable */
-import {EventDispatcher} from "three";
-
 const pako = require('pako')
 const DATATYPE = [
     'null',

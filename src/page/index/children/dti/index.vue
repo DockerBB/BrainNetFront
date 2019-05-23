@@ -14,6 +14,7 @@
                         <el-step title="TBSS" @click.native="()=>activeDTI = 7"></el-step>
                         <el-step title="Atlas Statistics" @click.native="()=>activeDTI = 8"></el-step>
                         <el-step title="Fiber Tracking" @click.native="()=>activeDTI = 9"></el-step>
+                        <el-step title="Network Construction" @click.native="()=>activeDTI = 10"></el-step>
                     </el-steps>
                 </div>
                 <div style="height: 460px;width: 80%;float: right;overflow-y: scroll;">
@@ -123,10 +124,10 @@
                             </el-form-item>
                             <el-form-item label="Propagetion_Algorithm">
                                 <el-select v-model="fiberTracking.propagetionAlgorithm" @change="onPropagetionAlgorithmChange">
-                                    <el-option label="FACT" value="FACT"></el-option>
-                                    <el-option label="2nd-order Runge-Kutta" value="2nd-order Runge-Kutta"></el-option>
-                                    <el-option label="Interpolated Streamline" value="Interpolated Streamline"></el-option>
-                                    <el-option label="Tensorline" value="Tensorline"></el-option>
+                                    <el-option label="FACT" value="fact"></el-option>
+                                    <el-option label="2nd-order Runge-Kutta" value="rk2"></el-option>
+                                    <el-option label="Interpolated Streamline" value="sl"></el-option>
+                                    <el-option label="Tensorline" value="tl"></el-option>
                                 </el-select>
                             </el-form-item>
                             <el-form-item label="FA_mask_Threshold">
@@ -150,22 +151,52 @@
                             </el-form-item>
                             <el-form-item label="Orientation patch">
                                 <el-select v-model="fiberTracking.orientationPatchInvertOption">
-                                    <el-option label="No Inversion" value="No Inversion"></el-option>
-                                    <el-option label="Invert X" value="Invert X"></el-option>
-                                    <el-option label="Invert Y" value="Invert Y"></el-option>
-                                    <el-option label="Invert Z" value="Invert Z"></el-option>
+                                    <el-option label="No Inversion" value="noInversion"></el-option>
+                                    <el-option label="Invert X" value="invert_x"></el-option>
+                                    <el-option label="Invert Y" value="invert_y"></el-option>
+                                    <el-option label="Invert Z" value="invert_z"></el-option>
                                 </el-select>
                                 <el-select v-model="fiberTracking.orientationPatchSwapOption">
-                                    <el-option label="No Swap" value="No Swap"></el-option>
-                                    <el-option label="Swap X/Y" value="Swap X/Y"></el-option>
-                                    <el-option label="Swap Y/Z" value="Swap Y/Z"></el-option>
-                                    <el-option label="Swap Z/X" value="Swap Z/X"></el-option>
+                                    <el-option label="No Swap" value="noSwap"></el-option>
+                                    <el-option label="Swap X/Y" value="swap_xy"></el-option>
+                                    <el-option label="Swap Y/Z" value="swap_yz"></el-option>
+                                    <el-option label="Swap Z/X" value="swap_zx"></el-option>
                                 </el-select>
                             </el-form-item>
                             <el-form-item label="Apply Spline Filter">
                                 <el-select v-model="fiberTracking.applySplineFilter">
                                     <el-option label="on" value="on"></el-option>
                                     <el-option label="off" value="off"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                    <div style="min-height: 360px" v-else-if="activeDTI === 10">
+                        <el-form label-position="left" v-model="networkConstruction" label-width="230px">
+                            <h1>Network Construction</h1>
+                            <el-form-item label="runNetworkConstruction">
+                                <el-select v-model="networkConstruction.runNetworkConstruction">
+                                    <el-option label="on" value="on"></el-option>
+                                    <el-option label="off" value="off"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="skull_remove(T1)">
+                                <el-input v-model="networkConstruction.skullRemove_T1" style="width: 100px"></el-input>
+                            </el-form-item>
+                            <el-form-item label="T1_template">
+                                <el-input v-model="networkConstruction.T1_template" style="max-width: 500px" readonly>
+                                    <i class="iconfont icon-dir" slot="append" @click="setFileList(['networkConstruction','T1_template'], 'template')"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item label="Parcellated_atlas">
+                                <el-input v-model="networkConstruction.parcellatedAtlas" style="max-width: 500px" readonly>
+                                    <i class="iconfont icon-dir" slot="append" @click="setFileList(['networkConstruction','parcellatedAtlas'], 'atlas')"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item label="NetworkConst_Type">
+                                <el-select v-model="networkConstruction.networkConstrType">
+                                    <el-option label="Deterministic" value="Deterministic"></el-option>
+                                    <el-option label="Bedpostx+Probabilistic" value="Bedpostx+Probabilistic"></el-option>
                                 </el-select>
                             </el-form-item>
                         </el-form>
@@ -188,8 +219,8 @@
                         </el-form-item>
                         <el-form-item label="p_map">
                             <el-select v-model="tbssResultDisplay.p_map">
-                                <el-option label="tbss_tfce_corrp_stat1" value="tbss_tfce_corrp_stat1"></el-option>
-                                <el-option label="tbss_tfce_corrp_stat2" value="tbss_tfce_corrp_stat2"></el-option>
+                                <el-option label="tbss_tfce_corrp_tstat1" value="tbss_tfce_corrp_tstat1"></el-option>
+                                <el-option label="tbss_tfce_corrp_tstat2" value="tbss_tfce_corrp_tstat2"></el-option>
                             </el-select>
                         </el-form-item>
                         <el-form-item label="4D_skeleton">
@@ -277,8 +308,15 @@
                   orientationPatchSwapOption: 'No Swap',
                   applySplineFilter: 'on'
                 },
+                networkConstruction:{
+                    runNetworkConstruction: 'on',
+                    skullRemove_T1: '0.5',
+                    T1_template: '/public/DTI/Templates/MNI152_T1_2mm_brain.nii.gz',
+                    parcellatedAtlas: '/public/DTI/atlases/AAL/AAL_Contract_90_2MM.nii.gz',
+                    networkConstrType:'Deterministic'
+                },
                 tbssResultDisplay: {
-                    p_map: 'tbss_tfce_corrp_stat1',
+                    p_map: 'tbss_tfce_corrp_tstat1',
                     _4D_skeleton: 'FA'
                 },
                 dialogTitle: '',
@@ -290,6 +328,7 @@
         },
         mounted() {
             this.initUploadField()
+            this.gettbssList()
             this.$axios.get('/getdirlist/dti').then(res => {
                 let taskList = []
                 res.data.data.forEach(v=>taskList.push({value:v.name}))
@@ -321,15 +360,20 @@
                     parameterList['wm_label_atlas'] = this.atlasStatistics.wmLabelAtlas
                     parameterList['wm_tract_atlas'] = this.atlasStatistics.wmProbtractAtlas
                     parameterList['runTracking'] = this.fiberTracking.runDeterministicFiberTracking === 'on'
-                    parameterList['track_method'] = this.fiberTracking.propagetionAlgorithm
+                    parameterList['track_method'] = this.fiberTracking.propagetionAlgorithm === 'FACT' ? 'fact':this.fiberTracking.propagetionAlgorithm
                     parameterList['famask_thres'] = this.fiberTracking.FA_mask_Threshold.map(d=>parseFloat(d))
                     parameterList['angle_thres'] = this.fiberTracking.Angle_Threshold
                     parameterList['step_length'] = this.fiberTracking.Step_Length
                     parameterList['apply_random'] = this.fiberTracking.Apply_Random_seed === 'on'
                     parameterList['random_seed'] = this.fiberTracking.Random_seed
-                    parameterList['invert_flag'] = this.fiberTracking.orientationPatchInvertOption
-                    parameterList['swap_flag'] = this.fiberTracking.orientationPatchSwapOption
+                    parameterList['invert_flag'] = this.fiberTracking.orientationPatchInvertOption === 'No Inversion' ? 'noInversion':this.fiberTracking.orientationPatchInvertOption
+                    parameterList['swap_flag'] = this.fiberTracking.orientationPatchSwapOption === 'No Swap' ? 'noSwap':this.fiberTracking.orientationPatchSwapOption
                     parameterList['apply_spline_filter'] = this.fiberTracking.applySplineFilter === 'on'
+                    parameterList['runNetworkConstruction'] = this.networkConstruction.runNetworkConstruction === 'on'
+                    parameterList['skull_remove'] = this.networkConstruction.skullRemove_T1.toString()
+                    parameterList['T1_template'] = this.networkConstruction.T1_template
+                    parameterList['parcellated_atlas'] = this.networkConstruction.parcellatedAtlas
+                    parameterList['networkConstr_type'] = this.networkConstruction.networkConstrType
                     // console.log(parameterList)
                     this.$axios.post('/dti/'+this.taskname+'/'+cache.getToken(), {jsonstr:JSON.stringify(parameterList)})
                         .then(res => this.$message({message: res.data.message, type: 'info'}))
@@ -343,7 +387,7 @@
                 this.$refs.fslView.loadAllImage(
                     '/MyFile/dti/'+this.tbssname+'/working_dwi/TBSS/MeanData/mean_FA.nii.gz',
                     '/MyFile/dti/'+this.tbssname+'/working_dwi/TBSS/MeanData/mean_FA_skeleton.nii.gz',
-                    '/MyFile/dti/'+this.tbssname+'/working_dwi/TBSS/TBSS_Randomise/FA/tbss_tfce_corrp_tstat1_tbssfill.nii.gz'
+                    '/MyFile/dti/'+this.tbssname+'/working_dwi/TBSS/TBSS_Randomise/'+this.tbssResultDisplay._4D_skeleton+'/'+this.tbssResultDisplay.p_map+'_tbssfill.nii.gz'
                 )
                 // this.$axios.post('/find',['/dti/'+this.tbssname+'/working_dwi/TBSS/TBSS_Randomise']).then(res=>{
                 //         if(res.data.data[0].match(/-find\s(.+)/)[1] === 'success') return Promise.resolve();
